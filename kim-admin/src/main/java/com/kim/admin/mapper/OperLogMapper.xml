@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.OperLogDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.service_id as serviceId,
+		t.tenant_id as tenantId,
+		t.module_name as moduleName,
+		t.operation_name as operationName,
+		t.ip_address as ipAddress,
+		t.content as content,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName
+	</sql>
+	
+	<sql id="queryCondition">
+        <if test="obj.serviceId != null and obj.serviceId != ''">
+            AND t.service_id = #{obj.serviceId}
+        </if>
+        AND t.tenant_id = #{obj.tenantId}
+        <if test="obj.moduleName != null and obj.moduleName != ''">
+            AND t.module_name like CONCAT('%', #{obj.moduleName}, '%')
+        </if>
+        <if test="obj.operationName != null and obj.operationName != ''">
+            AND t.operation_name like CONCAT('%', #{obj.operationName}, '%')
+        </if>
+        <if test="obj.ipAddress != null and obj.ipAddress != ''">
+            AND t.ip_address = #{obj.ipAddress}
+        </if>
+        <if test="obj.operUser != null and obj.operUser != ''">
+            AND (t.oper_user = #{obj.operUser} or t.oper_name like CONCAT('%', #{obj.operUser}, '%'))
+        </if>
+        <if test="obj.operTimeStart != null and obj.operTimeStart != ''">
+            AND t.oper_time <![CDATA[>=]]> #{obj.operTimeStart}
+        </if>
+         <if test="obj.operTimeEnd != null and obj.operTimeEnd != ''">
+            AND t.oper_time <![CDATA[<=]]> #{obj.operTimeEnd}
+        </if>
+		AND t.atv_flag = 1
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.OperLogEntity">
+		select 
+			t1.name as tenantName,
+			<include refid="selectColumn"/>
+		from icm_admin_oper_log as t
+		left join icm_admin_tenant as t1 on t.tenant_id = t1.tenant_id
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		order by t.oper_time desc 
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_oper_log as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+</mapper>

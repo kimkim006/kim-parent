@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.MainTaskDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.batch_no as batchNo,
+		t.mode_code as modeCode,
+		t.business_code as businessCode,
+		t.rule_id as ruleId,
+		t.resolver as resolver,
+		t.sample_type as sampleType,
+		t.item_type as itemType,
+		t.busi_group_code as busiGroupCode,
+		t.agent_id as agentId,
+		t.quality_group_code as qualityGroupCode,
+		t.inspector as inspector,
+		t.extract_time as extractTime,
+		t.allocate_time as allocateTime,
+		t.cur_processer as curProcesser,
+		t.last_processer as lastProcesser,
+		DATE_FORMAT(t.last_process_time,'%Y-%m-%d %H:%i:%s') as lastProcessTime,
+		t.allocate_count as allocateCount,
+		t.approval_count as approvalCount,
+		t.appeal_count as appealCount,
+		t.evaluation_count as evaluationCount,
+		t.adjust_score_count as adjustScoreCount,
+		t.status as status,
+		t.score as score,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<sql id="selectTapeColumn">
+		t0.id as 'tape.id',
+		t0.tape_id as 'tape.tapeId',
+		t0.batch_no as 'tape.batchNo',
+		t0.main_task_id as 'tape.mainTaskId',
+		t0.serial_number as 'tape.serialNumber',
+		t0.satisfaction_type as 'tape.satisfactionType',
+		t0.contract_no as 'tape.contractNo',
+		t0.busi_group_code as 'tape.busiGroupCode',
+		t0.cust_name as 'tape.custName',
+		t0.cust_phone as 'tape.custPhone',
+		t0.agent_phone as 'tape.agentPhone',
+		t0.agent_id as 'tape.agentId',
+		t0.agent_name as 'tape.agentName',
+		t0.agent_no as 'tape.agentNo',
+		t0.record_time as 'tape.recordTime',
+		DATE_FORMAT(t0.start_time,'%Y-%m-%d %H:%i:%s') as 'tape.startTime',
+		DATE_FORMAT(t0.end_time,'%Y-%m-%d %H:%i:%s') as 'tape.endTime',
+		t0.type as 'tape.type',
+		t0.direction as 'tape.direction',
+		t0.hangup_type as 'tape.hangupType',
+		t0.platform as 'tape.platform',
+		t0.service_no as 'tape.serviceNo',
+		t0.media_type as 'tape.mediaType',
+		t0.address as 'tape.address',
+		t0.tenant_id as 'tape.tenantId',
+		t0.atv_flag as 'tape.atvFlag',
+		DATE_FORMAT(t0.oper_time,'%Y-%m-%d %H:%i:%s') as 'tape.operTime',
+		t0.oper_user as 'tape.operUser',
+		t0.oper_name as 'tape.operName',
+		t0.remark as 'tape.remark',
+	</sql>
+	
+	<sql id="selectEvalColumn">
+		e.id as 'eval.id',
+		e.task_id as 'eval.taskId',
+		e.agent_id as 'eval.agentId',
+		e.inspector as 'eval.inspector',
+		e.damaged as 'eval.damaged',
+		e.orig_score as 'eval.origScore',
+		e.score as 'eval.score',
+		e.cal_score as 'eval.calScore',
+		e.status as 'eval.status',
+		e.is_last as 'eval.isLast',
+		e.tenant_id as 'eval.tenantId',
+		e.atv_flag as 'eval.atvFlag',
+		DATE_FORMAT(e.eval_time,'%Y-%m-%d %H:%i:%s') as 'eval.evalTime',
+		DATE_FORMAT(e.oper_time,'%Y-%m-%d %H:%i:%s') as 'eval.operTime',
+		e.oper_user as 'eval.operUser',
+		e.oper_name as 'eval.operName',
+		e.remark as 'eval.remark',
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.MainTaskVo"
+		resultType="com.kim.quality.business.entity.MainTaskEntity">
+		select 
+			t1.name as qualityGroupName,
+			t2.name as busiGroupName,
+			t3.name as agentName,
+			t4.name as inspectorName,
+			t5.name as curProcesserName,
+			e.damaged as damaged,
+			<include refid="selectTapeColumn"/>
+			<include refid="selectColumn"/>
+		from icm_qt_main_task as t
+		left join icm_qt_sample_tape as t0 on t0.main_task_id = t.id and t0.atv_flag=1 AND t0.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_group t1 ON t.quality_group_code = t1.CODE and t1.atv_flag=1 AND t1.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_group t2 ON t.busi_group_code = t2.CODE and t2.atv_flag=1 AND t2.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_user t3 ON t.agent_id = t3.username and t3.atv_flag=1 AND t3.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_user t4 ON t.inspector = t4.username and t4.atv_flag=1 AND t4.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_user t5 ON t.cur_processer = t5.username and t5.atv_flag=1 AND t5.tenant_id = t.tenant_id
+		left join icm_qt_evaluation as e on e.task_id = t.id and e.tenant_id = t.tenant_id and e.atv_flag=1 
+			and e.is_last = 1 and e.status != ${@EvaluationEntity@STATUS_REJECTED}
+		<where>
+			<if test="obj.damaged != null">
+				and e.damaged = #{obj.damaged}
+			</if>
+			<include refid="queryCondition"/>
+		</where>
+		order by t.id,t.oper_time desc 
+	</select>
+		
+	<sql id="queryCondition">
+		<if test="obj.startTime != null and obj.startTime != ''">
+            AND t0.start_time <![CDATA[>=]]> #{obj.startTime}
+        </if>
+        <if test="obj.endTime != null and obj.endTime != ''">
+            AND t0.start_time <![CDATA[<=]]> #{obj.endTime}
+        </if>
+        <if test="obj.custPhone != null and obj.custPhone != ''">
+            AND t0.cust_phone = #{obj.custPhone}
+        </if>
+        
+        <if test="obj.id != null and obj.id != ''">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.batchNo != null and obj.batchNo != ''">
+            AND t.batch_no = #{obj.batchNo}
+        </if>
+		<if test="obj.batchNos != null and obj.batchNos.size() > 0 ">
+            AND t.batch_no in 
+            <foreach collection="obj.batchNos" item="item" open="(" separator="," close=")">
+            	#{item}
+            </foreach>
+        </if>
+        <if test="obj.modeCode != null and obj.modeCode != ''">
+            AND t.mode_code = #{obj.modeCode}
+        </if>
+        <if test="obj.businessCode != null and obj.businessCode != ''">
+            AND t.business_code = #{obj.businessCode}
+        </if>
+        <if test="obj.ruleId != null">
+            AND t.rule_id = #{obj.ruleId}
+        </if>
+        <if test="obj.resolver != null and obj.resolver != ''">
+            AND t.resolver = #{obj.resolver}
+        </if>
+        <if test="obj.sampleType != null and obj.sampleType != ''">
+            AND t.sample_type = #{obj.sampleType}
+        </if>
+        <if test="obj.itemType != null">
+            AND t.item_type = #{obj.itemType}
+        </if>
+        <if test="obj.busiGroupCode != null and obj.busiGroupCode != ''">
+            AND t.busi_group_code = #{obj.busiGroupCode}
+        </if>
+        <if test="obj.agentId != null and obj.agentId != ''">
+            AND t.agent_id = #{obj.agentId}
+        </if>
+        <if test="obj.qualityGroupCode != null and obj.qualityGroupCode != ''">
+            AND t.quality_group_code = #{obj.qualityGroupCode}
+        </if>
+        <if test="obj.allocateTime != null and obj.allocateTime != ''">
+            AND t.allocate_time = #{obj.allocateTime}
+        </if>
+        <if test="obj.inspector != null and obj.inspector != ''">
+            AND t.inspector = #{obj.inspector} 
+        </if>
+        <if test="obj.curProcesser != null and obj.curProcesser != ''">
+            AND t.cur_processer = #{obj.curProcesser}
+        </if>
+        <if test="obj.lastProcesser != null and obj.lastProcesser != ''">
+            AND t.last_processer = #{obj.lastProcesser}
+        </if>
+        <if test="obj.status != null">
+            AND t.status = #{obj.status}
+        </if>
+        <if test="obj.statusArr != null and obj.statusArr.size()>0">
+     		AND t.status in 
+            <foreach collection="obj.statusArr" item="item" open="(" separator="," close=")">
+		        #{item}
+		    </foreach>
+        </if>
+        <if test="obj.operTimeStart != null and obj.operTimeStart != ''">
+            AND t.oper_time <![CDATA[>=]]> #{obj.operTimeStart}
+        </if>
+        <if test="obj.operTimeEnd != null and obj.operTimeEnd != ''">
+            AND t.oper_time <![CDATA[<=]]> #{obj.operTimeEnd}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.MainTaskEntity">
+		select 
+			t1.name as qualityGroupName,
+			t2.name as busiGroupName,
+			t3.name as agentName,
+			t4.name as inspectorName,
+			t5.name as curProcesserName,
+			e.damaged as damaged,
+			<include refid="selectTapeColumn"/>
+			<include refid="selectColumn"/>
+		from icm_qt_main_task as t
+		left join icm_qt_sample_tape as t0 on t0.main_task_id = t.id and t0.atv_flag=1 AND t0.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_group t1 ON t.quality_group_code = t1.CODE and t1.atv_flag=1 AND t1.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_group t2 ON t.busi_group_code = t2.CODE and t2.atv_flag=1 AND t2.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_user t3 ON t.agent_id = t3.username and t3.atv_flag=1 AND t3.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_user t4 ON t.inspector = t4.username and t4.atv_flag=1 AND t4.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_user t5 ON t.cur_processer = t5.username and t5.atv_flag=1 AND t5.tenant_id = t.tenant_id
+		left join icm_qt_evaluation as e on e.task_id = t.id and e.tenant_id = t.tenant_id and e.atv_flag=1 
+			and e.is_last = 1 and e.status != ${@EvaluationEntity@STATUS_REJECTED}
+		<where>
+			<if test="obj.damaged != null">
+				and e.damaged = #{obj.damaged}
+			</if>
+			<include refid="queryCondition"/>
+		</where>
+		order by t.oper_time desc 
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listSampleDetail" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.MainTaskEntity">
+		select 
+			tt0.type_code as 'tape.summary.typeCode',
+			tt0.first_code as 'tape.summary.firstCode',
+			tt0.second_code as 'tape.summary.secondCode',
+			tt0.third_code as 'tape.summary.thirdCode',
+			tt0.forth_code as 'tape.summary.forthCode',
+			tt1.name as 'tape.summary.typeName',
+			tt2.name as 'tape.summary.firstName',
+			tt3.name as 'tape.summary.secondName',
+			tt4.name as 'tape.summary.thirdName',
+			tt5.name as 'tape.summary.forthName',
+			
+			t1.name as qualityGroupName,
+			t2.name as busiGroupName,
+			t3.name as agentName,
+			t4.name as inspectorName,
+			<include refid="selectTapeColumn"/>
+			<include refid="selectColumn"/>
+		from icm_qt_main_task as t
+		left join icm_qt_sample_tape as t0 on t0.main_task_id = t.id AND t0.tenant_id = t.tenant_id
+		<choose>
+			<when test="obj.dataType == 'DEL'">
+				and t0.atv_flag= 0
+			</when>
+			<otherwise>and t0.atv_flag= 1</otherwise>
+		</choose>
+		LEFT JOIN icm_admin_group t1 ON t.quality_group_code = t1.CODE and t1.atv_flag=1 AND t1.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_group t2 ON t.busi_group_code = t2.CODE and t2.atv_flag=1 AND t2.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_user t3 ON t.agent_id = t3.username and t3.atv_flag=1 AND t3.tenant_id = t.tenant_id
+		LEFT JOIN icm_admin_user t4 ON t.inspector = t4.username and t4.atv_flag=1 AND t4.tenant_id = t.tenant_id
+		
+		left join icm_qt_tape_summary as tt0 on t0.serial_number = tt0.serial_number and tt0.tenant_id =t0.tenant_id and tt0.atv_flag = 1
+		left join icm_qt_summary as tt1 on tt1.code = tt0.type_code and tt1.tenant_id =tt0.tenant_id and tt1.atv_flag = 1
+		left join icm_qt_summary as tt2 on tt2.code = tt0.first_code and tt2.tenant_id =tt0.tenant_id and tt2.atv_flag = 1
+		left join icm_qt_summary as tt3 on tt3.code = tt0.second_code and tt3.tenant_id =tt0.tenant_id and tt3.atv_flag = 1
+		left join icm_qt_summary as tt4 on tt4.code = tt0.third_code and tt4.tenant_id =tt0.tenant_id and tt4.atv_flag = 1
+		left join icm_qt_summary as tt5 on tt5.code = tt0.forth_code and tt5.tenant_id =tt0.tenant_id and tt5.atv_flag = 1
+		<where>
+			<choose>
+				<when test="obj.dataType == 'ASSG'">
+					and t.status <![CDATA[<]]> ${@com.kim.quality.business.enums.MainTask@STATUS_TO_EVALUATION}
+					AND t.atv_flag = 1
+				</when>
+				<when test="obj.dataType == 'ACT'">
+					and t.status <![CDATA[>]]> ${@com.kim.quality.business.enums.MainTask@STATUS_RECYCLED}
+					AND t.atv_flag = 1
+				</when>
+				<when test="obj.dataType == 'DEL'">
+					and t.status <![CDATA[<]]> ${@com.kim.quality.business.enums.MainTask@STATUS_TO_EVALUATION}
+					AND t.atv_flag = 0
+				</when>
+				<otherwise>AND t.atv_flag = 1</otherwise>
+			</choose>
+    		AND t.tenant_id = #{obj.tenantId}
+			<if test="obj.batchNo != null and obj.batchNo != ''">
+	            AND t.batch_no = #{obj.batchNo}
+	        </if>
+	        <if test="obj.status != null">
+	            AND t.status = #{obj.status}
+	        </if>
+	        <if test="obj.busiGroupCode != null and obj.busiGroupCode != ''">
+	            AND t.busi_group_code = #{obj.busiGroupCode}
+	        </if>
+	        <if test="obj.agentId != null and obj.agentId != ''">
+	            AND t.agent_id = #{obj.agentId}
+	        </if>
+	        <if test="obj.inspector != null and obj.inspector != ''">
+	            AND t.inspector = #{obj.inspector} 
+	        </if>
+		</where>
+		order by t.oper_time desc 
+		limit #{page.offset},#{page.rows}
+	</select>
+
+    <!-- 审核页面 -->
+	<select id="listApproval" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.MainTaskEntity">
+		select
+			t1.id as approvalId,
+       		t2.name as groupName,
+			t3.name as curProcesserName,
+			t1.type as approvalType,
+			t1.submitter as submitter,
+			t4.name as submitterName,
+			t3.name as agentName,
+			DATE_FORMAT(t1.submit_time,'%Y-%m-%d %H:%i:%s') as submitTime,
+			<include refid="selectTapeColumn"/>
+			<include refid="selectColumn"/>
+		from icm_qt_main_task as t  
+		left join icm_qt_sample_tape as t0 on t0.main_task_id = t.id and t0.atv_flag=1 AND t0.tenant_id = t.tenant_id
+		inner join icm_qt_approval as t1 on t1.task_id = t.id and t1.atv_flag = 1 
+			and t1.is_last = ${@MainTask@ITEM_IS_LAST_Y}
+			AND t1.tenant_id = t.tenant_id and t1.type = #{obj.approvalType}
+			<if test="obj.approvalStatus != null and obj.approvalStatus != ''">
+				and t1.status = #{obj.approvalStatus}
+			</if>
+        LEFT JOIN icm_admin_group t2 ON t2.atv_flag=1 AND t2.tenant_id = t.tenant_id and 
+	        <choose>
+	        	<when test="obj.approvalType.toString() == '1'">
+	        		t.quality_group_code = t2.code
+	        	</when>
+	        	<otherwise>
+	        		t.busi_group_code = t2.code
+	        	</otherwise>
+	        </choose>
+        	
+        LEFT JOIN icm_admin_user t3 ON t.cur_processer = t3.username and t3.atv_flag=1 AND t3.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_user t4 ON t1.submitter = t4.username and t4.atv_flag=1 AND t4.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_user t5 ON t.agent_id = t5.username and t5.atv_flag=1 AND t5.tenant_id = t.tenant_id
+		<where>
+			<if test="obj.auditor != null and obj.auditor != ''">
+	            AND t1.auditor = #{obj.auditor}
+	        </if>
+			<include refid="queryCondition"/>
+		</where>
+        order by t.oper_time DESC
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+    <!-- 待评分页面 -->
+    <select id="listEvaluation" parameterType="java.util.HashMap"
+            resultType="com.kim.quality.business.entity.MainTaskEntity">
+        select
+	        t1.name as qualityGroupName,
+	        t3.name as agentName,
+	        <include refid="selectTapeColumn"/>
+	        <include refid="selectColumn"/>
+        from icm_qt_main_task as t
+        left join icm_qt_sample_tape as t0 on t0.main_task_id = t.id and t0.atv_flag=1 AND t0.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_group t1 ON t.quality_group_code = t1.CODE and t1.atv_flag=1 AND t1.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_user t3 ON t.agent_id = t3.username and t3.atv_flag=1 AND t3.tenant_id = t.tenant_id
+        <where>
+            <include refid="queryCondition"/>
+        </where>
+        ORDER BY t.oper_time DESC
+        limit #{page.offset},#{page.rows}
+    </select>
+    
+	<select id="listResult" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.MainTaskEntity">
+		select 
+			t2.name as busiGroupName,
+			t3.name as curProcesserName,
+			<include refid="selectTapeColumn"/>
+			<include refid="selectColumn"/>
+		from icm_qt_main_task as t
+		left join icm_qt_sample_tape as t0 on t0.main_task_id = t.id and t0.atv_flag=1 AND t0.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_group t2 ON t.busi_group_code = t2.CODE and t2.atv_flag=1 AND t2.tenant_id = t.tenant_id
+        LEFT JOIN icm_admin_user t3 ON t.cur_processer = t3.username and t3.atv_flag=1 AND t3.tenant_id = t.tenant_id
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_main_task as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.business.vo.MainTaskVo"
+		resultType="com.kim.quality.business.entity.MainTaskEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_main_task as t
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			id,
+			batch_no,
+			mode_code,
+			business_code,
+			rule_id,
+			resolver,
+			sample_type,
+			item_type,
+			busi_group_code,
+			agent_id,
+			quality_group_code,
+			inspector,
+			extract_time,
+			allocate_time,
+			cur_processer,
+			last_processer,
+			last_process_time,
+			allocate_count,
+			approval_count,
+			appeal_count,
+			evaluation_count,
+			adjust_score_count,
+			status,
+			score,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.MainTaskEntity">
+		insert into icm_qt_main_task(
+			<include refid="insertField"></include>
+		) values (
+            #{id},
+            #{batchNo},
+            #{modeCode},
+            #{businessCode},
+            #{ruleId},
+            #{resolver},
+            #{sampleType},
+            #{itemType},
+            #{busiGroupCode},
+            #{agentId},
+            #{qualityGroupCode},
+            #{inspector},
+            now(),
+            #{allocateTime},
+            #{curProcesser},
+            #{lastProcesser},
+            #{lastProcessTime},
+            #{allocateCount},
+            #{approvalCount},
+            #{appealCount},
+            #{evaluationCount},
+            #{adjustScoreCount},
+            #{status},
+            #{score},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_main_task(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.id},
+            #{item.batchNo},
+            #{item.modeCode},
+            #{item.businessCode},
+            #{item.ruleId},
+            #{item.resolver},
+            #{item.sampleType},
+            #{item.itemType},
+            #{item.busiGroupCode},
+            #{item.agentId},
+            #{item.qualityGroupCode},
+            #{item.inspector},
+            now(),
+            #{item.allocateTime},
+            #{item.curProcesser},
+            #{item.lastProcesser},
+            #{item.lastProcessTime},
+            #{item.allocateCount},
+            #{item.approvalCount},
+            #{item.appealCount},
+            #{item.evaluationCount},
+            #{item.adjustScoreCount},
+            #{item.status},
+            #{item.score},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<update id="update" parameterType="com.kim.quality.business.entity.MainTaskEntity">
+		update icm_qt_main_task 
+		<set>
+            <if test="curProcesser != null">
+                cur_processer = #{curProcesser},
+            </if>
+            <if test="lastProcesser != null">
+                last_processer = #{lastProcesser},
+            </if>
+            <if test="lastProcessTime != null">
+                last_process_time = #{lastProcessTime},
+            </if>
+            <if test="allocateCount != null">
+                allocate_count = #{allocateCount},
+            </if>
+            <if test="approvalCount != null">
+                approval_count = #{approvalCount},
+            </if>
+            <if test="appealCount != null">
+                appeal_count = #{appealCount},
+            </if>
+            <if test="evaluationCount != null">
+                evaluation_count = #{evaluationCount},
+            </if>
+            <if test="adjustScoreCount != null">
+                adjust_score_count = #{adjustScoreCount},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="score != null">
+                score = #{score},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="updateStatus" parameterType="com.kim.quality.business.entity.MainTaskEntity">
+		update icm_qt_main_task 
+		<set>
+            last_processer = #{operUser},
+            last_process_time = now(),
+            <if test="curProcesser != null">
+                cur_processer = #{curProcesser},
+            </if>
+            <if test="approvalCount != null">
+                approval_count = approval_count+1,
+            </if>
+            <if test="appealCount != null">
+                appeal_count = appeal_count+1,
+            </if>
+            <if test="evaluationCount != null">
+                evaluation_count = evaluation_count+1,
+            </if>
+            <if test="adjustScoreCount != null">
+                adjust_score_count = adjust_score_count+1,
+            </if>
+            <if test="score != null">
+                score = #{score},
+            </if>
+            <if test="status != null">
+            	status = #{status},
+            </if>
+            oper_time = now(),
+            oper_user = #{operUser},
+            oper_name = #{operName},
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and status=#{oldStatus}
+			and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="allocate" parameterType="com.kim.quality.business.vo.MainTaskVo">
+		update icm_qt_main_task 
+		<set>
+            quality_group_code = #{qualityGroupCode},
+            inspector = #{inspector},
+            allocate_time = now(),
+            cur_processer = #{inspector},
+            allocate_count = allocate_count+1,
+            status = ${@MainTask@STATUS_TO_EVALUATION},
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where atv_flag = 1
+		AND tenant_id = #{tenantId}
+		<if test="batchNo != null and batchNo != ''">
+            and batch_no = #{batchNo}
+        </if>
+        and (status = ${@MainTask@STATUS_TO_ALLOCATE}
+        	or status = ${@MainTask@STATUS_RECYCLED})
+        and id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach>
+	</update>
+	
+	<update id="recycle" parameterType="com.kim.quality.business.vo.MainTaskVo">
+		update icm_qt_main_task 
+		<set>
+            quality_group_code = '',
+            inspector = '',
+            allocate_time = now(),
+            cur_processer = '',
+            recycle_count = recycle_count+1,
+            status = ${@MainTask@STATUS_RECYCLED},
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where atv_flag = 1
+		AND tenant_id = #{tenantId}
+		and status = ${@MainTask@STATUS_TO_EVALUATION}
+		<if test="batchNo != null and batchNo != ''">
+            and batch_no = #{batchNo}
+        </if>
+        and id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach>
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.business.vo.MainTaskVo">
+		update icm_qt_main_task set atv_flag=0, oper_time = now()
+		where batch_no=#{batchNo} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+			<if test="statusArr != null and statusArr.size()>0">
+	     		AND status in 
+	            <foreach collection="statusArr" item="item" open="(" separator="," close=")">
+			        #{item}
+			    </foreach>
+	        </if>
+			<if test="ids != null and ids.size()>0">
+				and id in
+				<foreach collection="ids" item="item" open="(" separator="," close=")">
+		        	#{item}
+		        </foreach>
+			</if>
+	</update>
+	
+</mapper>

@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.setting.dao.SampleRuleDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.mode_code as modeCode,
+		t.business_code as businessCode,
+		t.name as name,
+		t.sample_type as sampleType,
+		t.active as active,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.setting.vo.SampleRuleVo"
+		resultType="com.kim.quality.setting.entity.SampleRuleEntity">
+		select 
+			<if test="obj.sampleType != null and obj.sampleType == 'system'">
+	            t1.person_avg as personAvg,
+	        </if>
+			<include refid="selectColumn"/>
+		from icm_qt_sample_rule as t
+		<if test="obj.sampleType != null and obj.sampleType == 'system'">
+            left join icm_qt_sample_rule_atta as t1 on t.id = t1.rule_id
+        </if>
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.modeCode != null and obj.modeCode != ''">
+            AND t.mode_code = #{obj.modeCode}
+        </if>
+        <if test="obj.businessCode != null and obj.businessCode != ''">
+            AND t.business_code = #{obj.businessCode}
+        </if>
+        <if test="obj.name != null and obj.name != ''">
+            AND t.name like concat('%', #{obj.name}, '%')
+        </if>
+        <if test="obj.sampleType != null and obj.sampleType != ''">
+            AND t.sample_type = #{obj.sampleType}
+        </if>
+        <if test="obj.active != null">
+            AND t.active = #{obj.active}
+        </if>
+		AND t.atv_flag = 1
+        AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.setting.entity.SampleRuleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_rule as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_sample_rule as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.setting.vo.SampleRuleVo"
+		resultType="com.kim.quality.setting.entity.SampleRuleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_rule as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<select id="findAtta" parameterType="com.kim.quality.setting.vo.SampleRuleVo"
+		resultType="com.kim.quality.setting.entity.SampleRuleEntity">
+		select 
+			t.rule_id as id,
+			t.person_avg as personAvg,
+			t.tenant_id as tenantId,
+			t.atv_flag as atvFlag,
+			DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+			t.oper_user as operUser,
+			t.oper_name as operName,
+			t.remark as remark
+		from icm_qt_sample_rule_atta as t 
+		where t.rule_id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			mode_code,
+			business_code,
+			name,
+			sample_type,
+			active,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.setting.entity.SampleRuleEntity"
+			keyProperty="id" useGeneratedKeys="true">
+		insert into icm_qt_sample_rule(
+			<include refid="insertField"></include>
+		) values (
+            #{modeCode},
+            #{businessCode},
+            #{name},
+            #{sampleType},
+            #{active},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_sample_rule(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.modeCode},
+            #{item.businessCode},
+            #{item.name},
+            #{item.sampleType},
+            #{item.active},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<insert id="insertAtta" parameterType="com.kim.quality.setting.entity.SampleRuleEntity">
+		insert into icm_qt_sample_rule_atta(
+			rule_id,
+			person_avg,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name
+		) values (
+            #{id},
+            #{personAvg},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName}
+		)
+	</insert>
+	
+	<update id="update" parameterType="com.kim.quality.setting.entity.SampleRuleEntity">
+		update icm_qt_sample_rule 
+		<set>
+            <if test="modeCode != null">
+                mode_code = #{modeCode},
+            </if>
+            <if test="businessCode != null">
+                business_code = #{businessCode},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="sampleType != null">
+                sample_type = #{sampleType},
+            </if>
+            <if test="active != null">
+                active = #{active},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="updateAtta" parameterType="com.kim.quality.setting.entity.SampleRuleEntity">
+		update icm_qt_sample_rule_atta 
+		<set>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="personAvg != null">
+                person_avg = #{personAvg},
+            </if>
+		</set>
+		where rule_id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.setting.vo.SampleRuleVo">
+		update icm_qt_sample_rule set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="clearSystemActiveRule" parameterType="com.kim.quality.setting.vo.SampleRuleVo">
+		update icm_qt_sample_rule set active=0 and oper_time = now()
+		where atv_flag = 1 and sample_type = 'system'
+		<if test="id != null">
+            and id != #{id}
+        </if>
+        <if test="modeCode != null and modeCode != ''">
+            and mode_code = #{modeCode}
+        </if>
+        <if test="businessCode != null and businessCode !=''">
+            and business_code = #{businessCode}
+        </if>
+		AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogicAtta" parameterType="com.kim.quality.setting.vo.SampleRuleVo">
+		update icm_qt_sample_rule_atta set atv_flag=0, oper_time = now()
+		where rule_id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

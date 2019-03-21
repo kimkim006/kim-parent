@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.schedule.mq.dao.IvrInfoDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		DATE_FORMAT(t.date,'%Y-%m-%d') as date,
+		t.serial_number as serialNumber,
+		t.cust_id_card as custIdCard,
+		t.ivr_verify as ivrVerify,
+		t.ivr_verify_code as ivrVerifyCode,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.IvrInfoVo"
+		resultType="com.kim.quality.business.entity.IvrInfoEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_ivr_info as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.startTime != null and obj.startTime != ''">
+            AND t.date  <![CDATA[>=]]> #{obj.startTime}
+        </if>
+        <if test="obj.endTime != null and obj.endTime != ''">
+            AND t.date  <![CDATA[<=]]> #{obj.endTime}
+        </if>
+        <if test="obj.serialNumber != null and obj.serialNumber != ''">
+            AND t.serial_number = #{obj.serialNumber}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<sql id="insertField">
+			date,
+			serial_number,
+			cust_id_card,
+			ivr_verify,
+			ivr_verify_code,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.IvrInfoEntity">
+		insert into icm_qt_ivr_info(
+			<include refid="insertField"></include>
+		) values (
+            #{date},
+            #{serialNumber},
+            #{custIdCard},
+            #{ivrVerify},
+            #{ivrVerifyCode},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_ivr_info(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.date},
+            #{item.serialNumber},
+            #{item.custIdCard},
+            #{item.ivrVerify},
+            #{item.ivrVerifyCode},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<update id="update" parameterType="com.kim.quality.business.entity.IvrInfoEntity">
+		update icm_qt_ivr_info 
+		<set>
+            <if test="date != null">
+                date = #{date},
+            </if>
+            <if test="custIdCard != null">
+                cust_id_card = #{custIdCard},
+            </if>
+            <if test="ivrVerify != null">
+                ivr_verify = #{ivrVerify},
+            </if>
+            <if test="ivrVerify != null">
+                ivr_verify_code = #{ivrVerifyCode},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where serial_number = #{serialNumber} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.business.vo.IvrInfoVo">
+		update icm_qt_ivr_info set atv_flag=0, oper_time = now()
+		where serial_number = #{serialNumber} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

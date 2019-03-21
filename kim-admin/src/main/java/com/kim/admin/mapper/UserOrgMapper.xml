@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.UserOrgDao">
+
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.itemCode != null and obj.itemCode != ''">
+            AND t.item_code = #{obj.itemCode}
+        </if>
+        <if test="obj.codeType != null">
+            AND t.code_type = #{obj.codeType}
+        </if>
+        <if test="obj.upperSuperior != null and obj.upperSuperior != ''">
+            AND t.upper_superior = #{obj.upperSuperior}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByGroupPage" parameterType="java.util.HashMap"
+			resultType="com.kim.admin.entity.UserOrgEntity">
+		SELECT
+			A.code as itemCode, 
+			A.name ,
+			${@UserOrgEntity@CODE_TYPE_GROUP} as codeType,
+			B.id, 
+			t1.name AS upperSuperiorName,
+			B.upper_superior AS upperSuperior,
+			B.oper_name AS operName,
+			B.oper_time as operTime
+		FROM icm_admin_group A
+		LEFT JOIN icm_admin_user_org_rl B ON A.code=B.item_code AND B.code_type=2 AND B.atv_flag=1 and A.tenant_id = B.tenant_id
+		left join icm_admin_user t1 on t1.username = B.upper_superior and t1.atv_flag=1 and t1.tenant_id = B.tenant_id
+		<include refid="groupAndUserSql"/>
+	</select>
+	
+	<select id="listByUserPage" parameterType="java.util.HashMap"
+			resultType="com.kim.admin.entity.UserOrgEntity">
+		SELECT
+			A.username AS itemCode, 
+			A.name,
+			B.code_type as codeType,
+			t1.name AS upperSuperiorName,
+			B.upper_superior AS upperSuperior,
+			B.oper_name AS operName,
+			B.oper_time AS operTime
+		FROM icm_admin_user A
+		LEFT JOIN icm_admin_user_org_rl B ON A.username=B.item_code AND B.atv_flag=1 and A.tenant_id = B.tenant_id
+			AND B.code_type=${@UserOrgEntity@CODE_TYPE_USER}
+		left join icm_admin_user t1 on t1.username = B.upper_superior and t1.atv_flag=1 and t1.tenant_id = B.tenant_id
+		<include refid="groupAndUserSql"/>
+	</select>
+	
+	<sql id="groupAndUserSql">
+		<where>
+			<if test="obj.itemCode != null and obj.itemCode != ''">
+				AND B.item_code = #{obj.itemCode}
+			</if>
+			<if test="obj.name != null and obj.name != ''">
+				AND A.name = #{obj.name}
+			</if>
+			<if test="obj.status == 1">
+				AND B.code_type is not null
+			</if>
+			<if test="obj.status == 2">
+				AND B.code_type is null
+			</if>
+			<if test="obj.upperSuperior != null and obj.upperSuperior != ''">
+				AND B.upper_superior = #{obj.upperSuperior}
+			</if>
+			AND A.atv_flag = 1
+			AND A.tenant_id = #{obj.tenantId}
+		</where>
+			order by B.oper_time DESC
+		limit #{page.offset},#{page.rows}
+	</sql>
+
+	<sql id="insertField">
+			item_code,
+			code_type,
+			upper_superior,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.admin.entity.UserOrgEntity">
+		insert into icm_admin_user_org_rl(
+			<include refid="insertField"></include>
+		) values (
+            #{itemCode},
+            #{codeType},
+            #{upperSuperior},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.UserOrgVo">
+		update icm_admin_user_org_rl set atv_flag=0, oper_time = now()
+		where atv_flag = 1 AND tenant_id = #{tenantId}
+			and item_code=#{itemCode}
+			AND code_type = #{codeType}
+	</update>
+	
+	<update id="deleteLogicByLeader" parameterType="com.kim.admin.vo.UserOrgVo">
+		update icm_admin_user_org_rl set atv_flag=0, oper_time = now()
+		where atv_flag = 1 AND tenant_id = #{tenantId}
+			and upper_superior=#{upperSuperior}
+			AND code_type = #{codeType}
+	</update>
+	
+</mapper>

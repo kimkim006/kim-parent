@@ -1,0 +1,89 @@
+server:
+    port: @server.port@
+    context-path: /notify
+    tomcat: 
+      basedir: @server.tomcat.basedir@
+logging:
+    config: classpath:logback-spring.xml
+spring:
+    evn: @env@
+    application:
+        name: icm-notify
+    jackson:
+        date-format: yyyy-MM-dd HH:mm:ss
+        time-zone: GMT+8
+        default-property-inclusion: non_null
+    redis:
+      host: @spring.redis.host@
+      port: @spring.redis.port@
+      password: @spring.redis.password@
+    http:
+      encoding:
+        charset: UTF-8
+        force: true
+        enabled: true
+      multipart:
+        max-file-size: 20Mb
+        max-request-size: 20Mb
+        
+datasource:
+    name: icm
+    url: @datasource.url@
+    username: @datasource.username@
+    password: @datasource.password@
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.jdbc.Driver
+    filters: stat
+    maxActive: 1000
+    initialSize: 5
+    maxWait: 60000
+    minIdle: 10
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    #验证连接是否有效。此参数必须设置为非空字符串，下面三项设置成true才能生效
+    validationQuery: SELECT 1
+    #指明连接是否被空闲连接回收器(如果有)进行检验.如果检测失败,则连接将被从池中去除.
+    testWhileIdle: true
+    #指明是否在从池中取出连接前进行检验,如果检验失败,则从池中去除连接并尝试取出另一个
+    testOnBorrow: true
+    #指明是否在归还到池中前进行检验
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxOpenPreparedStatements: 20
+mybatis: 
+    basePackage: com.kim.**.dao
+    mapperLocations: classpath*:com.kim/**/mapper/*.xml
+
+eureka:
+  instance:
+    hostname: ${spring.cloud.client.ipAddress}:${server.port}
+    statusPageUrlPath: ${server.context-path}/health
+    healthCheckUrlPath: ${server.context-path}/health
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+    lease-renewal-interval-in-seconds: 10 #续约更新频率，默认是30s
+    lease-expiration-duration-in-seconds: 15 
+  client: 
+    serviceUrl: 
+      defaultZone: ${eureka.instance.server}
+    registry-fetch-interval-seconds: 15 #拉取服务注册时间，默认60，改小实现发布后尽快访问
+
+management: 
+  security: 
+    enabled: false
+
+swagger:
+    basepackage: com.kim
+    service:
+        name: notify
+        description: 软电话后端服务
+        developer: 刘波
+        
+#未登录前白名单url和登录后的白名单url, 用户登录token保持时长（秒）
+access: 
+  token:
+    keep-time: 7200
+  filter: 
+    ignoreAuthUrl: /login/loginIn;/health;/info;
+    ignoreAuthResUrl: 
+

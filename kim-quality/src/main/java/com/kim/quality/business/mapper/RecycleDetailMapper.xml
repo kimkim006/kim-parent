@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.RecycleDetailDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.rcy_batch_no as rcyBatchNo,
+		t.batch_no as batchNo,
+		t.main_task_id as mainTaskId,
+		t.inspector as inspector,
+		t.status as status,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.RecycleDetailVo"
+		resultType="com.kim.quality.business.entity.RecycleDetailEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_recycle_detail as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.rcyBatchNo != null and obj.rcyBatchNo != ''">
+            AND t.rcy_batch_no = #{obj.rcyBatchNo}
+        </if>
+        <if test="obj.batchNo != null and obj.batchNo != ''">
+            AND t.batch_no = #{obj.batchNo}
+        </if>
+        <if test="obj.mainTaskId != null and obj.mainTaskId != ''">
+            AND t.main_task_id = #{obj.mainTaskId}
+        </if>
+        <if test="obj.inspector != null and obj.inspector != ''">
+            AND t.inspector = #{obj.inspector}
+        </if>
+        <if test="obj.status != null">
+            AND t.status = #{obj.status}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.RecycleDetailEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_recycle_detail as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_task_recycle_detail as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<sql id="insertField">
+			rcy_batch_no,
+			batch_no,
+			main_task_id,
+			inspector,
+			status,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.RecycleDetailEntity">
+		insert into icm_qt_task_recycle_detail(
+			<include refid="insertField"></include>
+		) values (
+            #{rcyBatchNo},
+            #{batchNo},
+            #{mainTaskId},
+            #{inspector},
+            #{status},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_task_recycle_detail(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.rcyBatchNo},
+            #{item.batchNo},
+            #{item.mainTaskId},
+            #{item.inspector},
+            #{item.status},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+</mapper>

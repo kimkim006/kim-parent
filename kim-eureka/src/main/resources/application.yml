@@ -1,0 +1,41 @@
+server:
+  port: @server.port@
+  context-path: /icmEurekaServer
+  tomcat: 
+      basedir: @server.tomcat.basedir@
+
+spring:
+  evn: @env@
+  application:
+    name: icm-eureka
+
+eureka:
+  environment: @env@
+  instance:
+    hostname: ${spring.cloud.client.ipAddress}:${server.port}
+    statusPageUrlPath: ${server.context-path}/health
+    healthCheckUrlPath: ${server.context-path}/health
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+    lease-renewal-interval-in-seconds: 10 #续约更新频率，默认是30s
+    lease-expiration-duration-in-seconds: 15 
+  client:
+    register-with-eureka: true #是否将自己注册到Eureka Server，默认为true
+    fetch-registry: true #是否从Eureka Server获取注册信息，默认为true
+    registry-fetch-interval-seconds: 30 #拉取服务注册时间，默认60，改小实现发布后尽快访问
+    serviceUrl:
+      defaultZone: ${eureka.instance.server}
+  server:
+     responseCacheUpdateInvervalMs: 3000
+     responseCacheAutoExpirationInSeconds: 180
+     eviction-interval-timer-in-ms: 3000
+#    enable-self-preservation: false #关闭自我保护
+
+#log
+logging:
+  config: classpath:logback-spring.xml
+
+#close security
+security:
+  basic:
+    enabled: false

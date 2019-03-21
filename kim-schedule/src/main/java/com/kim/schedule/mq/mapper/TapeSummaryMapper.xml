@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.schedule.mq.dao.TapeSummaryDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		DATE_FORMAT(t.date,'%Y-%m-%d') as date,
+		t.serial_number as serialNumber,
+		t.type_code as typeCode,
+		t.origin_type_code as originTypeCode,
+		t.first_code as firstCode,
+		t.second_code as secondCode,
+		t.third_code as thirdCode,
+		t.forth_code as forthCode,
+		t.origin_first_code as originFirstCode,
+		t.origin_second_code as originSecondCode,
+		t.origin_third_code as originThirdCode,
+		t.origin_forth_code as originForthCode,
+		t.source as source,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.TapeSummaryVo"
+		resultType="com.kim.quality.business.entity.TapeSummaryEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_tape_summary as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.startTime != null and obj.startTime != ''">
+            AND t.date <![CDATA[>=]]> #{obj.startTime}
+        </if>
+        <if test="obj.endTime != null and obj.endTime != ''">
+            AND t.date <![CDATA[<=]]> #{obj.endTime}
+        </if>
+        <if test="obj.source != null and obj.source != ''">
+            AND t.source = #{obj.source}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<sql id="insertField">
+			date,
+			serial_number,
+			type_code,
+			origin_type_code,
+			first_code,
+			second_code,
+			third_code,
+			forth_code,
+			origin_first_code,
+			origin_second_code,
+			origin_third_code,
+			origin_forth_code,
+			source,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.TapeSummaryEntity">
+		insert into icm_qt_tape_summary(
+			<include refid="insertField"></include>
+		) values (
+            #{date},
+            #{serialNumber},
+            #{typeCode},
+            #{originTypeCode},
+            #{firstCode},
+            #{secondCode},
+            #{thirdCode},
+            #{forthCode},
+            #{originFirstCode},
+            #{originSecondCode},
+            #{originThirdCode},
+            #{originForthCode},
+            #{source},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_tape_summary(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.date},
+            #{item.serialNumber},
+            #{item.typeCode},
+            #{item.originTypeCode},
+            #{item.firstCode},
+            #{item.secondCode},
+            #{item.thirdCode},
+            #{item.forthCode},
+            #{item.originFirstCode},
+            #{item.originSecondCode},
+            #{item.originThirdCode},
+            #{item.originForthCode},
+            #{item.source},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<update id="update" parameterType="com.kim.quality.business.entity.TapeSummaryEntity">
+		update icm_qt_tape_summary 
+		<set>
+            <if test="typeCode != null">
+                type_code = #{typeCode},
+            </if>
+            <if test="originTypeCode != null">
+                origin_type_code = #{originTypeCode},
+            </if>
+            <if test="firstCode != null">
+                first_code = #{firstCode},
+            </if>
+            <if test="secondCode != null">
+                second_code = #{secondCode},
+            </if>
+            <if test="thirdCode != null">
+                third_code = #{thirdCode},
+            </if>
+            <if test="forthCode != null">
+                forth_code = #{forthCode},
+            </if>
+            <if test="originFirstCode != null">
+                origin_first_code = #{originFirstCode},
+            </if>
+            <if test="originSecondCode != null">
+                origin_second_code = #{originSecondCode},
+            </if>
+            <if test="originThirdCode != null">
+                origin_third_code = #{originThirdCode},
+            </if>
+            <if test="originForthCode != null">
+                origin_forth_code = #{originForthCode},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where serial_number = #{serialNumber} 
+			and source = #{source}
+			AND tenant_id = #{tenantId}
+			and atv_flag = 1
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.business.vo.TapeSummaryVo">
+		update icm_qt_tape_summary set atv_flag=0, oper_time = now()
+		where serial_number = #{serialNumber} 
+			and source = #{source}
+			and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

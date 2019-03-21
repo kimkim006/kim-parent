@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.schedule.task.dao.CiscoTapeDao">
+
+	<sql id="selectColumn">
+			customercallid as serialNumber,
+			case direction when '呼入' then 1 when '呼出' then 2 else 0 end as type,
+			direction as direction,
+			agentId as agentNo,
+			agentName as agentName,
+			stationNo as agentPhone,
+			customerNo as custPhone,
+			serviceNo as serviceNo,
+			startTime as startTime,
+			EndTime as endTime,
+			etime as recordTime,
+			localPath as localpath,
+			localFile as localfile,
+			recServerIp as recserverip,
+			'http://' + recServerIp + '\' + REPLACE(localPath, ':', '') + localFile as address,
+			'Rec' as mediaType,
+			'cisco' as platForm
+	</sql>
+
+	<select id="listCiscoRecord" parameterType="java.util.Map"
+			resultType="com.kim.quality.business.entity.TapeEntity">
+		SELECT
+			<include refid="selectColumn"></include>
+		FROM
+			webcroute.dbo.app_inf_record
+		WHERE
+			startTime <![CDATA[>=]]> #{startTime, jdbcType=VARCHAR}
+			and startTime <![CDATA[<=]]> #{endTime, jdbcType=VARCHAR}
+			and direction = #{direction} 
+			<if test="serviceNos != null and serviceNos.size() > 0">
+				AND serviceNo IN
+				<foreach collection="serviceNos" item="item" open="(" separator="," close=")">
+					#{item, jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			<if test="agentNos != null and agentNos.size() > 0">
+				AND agentId IN
+				<foreach collection="agentNos" item="item" open="(" separator="," close=")">
+					#{item, jdbcType=VARCHAR}
+				</foreach>
+			</if>
+	</select>
+	
+</mapper>

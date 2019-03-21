@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.setting.dao.DarkSettingDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.username as username,
+		DATE_FORMAT(t.start_time,'%Y-%m-%d') as startTime,
+		DATE_FORMAT(t.end_time,'%Y-%m-%d') as endTime,
+		t.active as active,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.setting.vo.DarkSettingVo"
+		resultType="com.kim.quality.setting.entity.DarkSettingEntity">
+		select 
+			u.name as name,
+			<include refid="selectColumn"/>
+		from icm_qt_dark_setting as t
+		left join icm_admin_user as u on t.username = u.username and u.tenant_id = #{obj.tenantId} and u.atv_flag = 1
+		left join icm_admin_group_user as t1 on t.username = t1.username and t1.tenant_id = #{obj.tenantId} and t1.atv_flag = 1 
+		<where>
+			<if test="obj.busiGroup != null and obj.busiGroup != ''">
+				and t1.group_code = #{obj.busiGroup}
+			</if>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.username != null and obj.username != ''">
+            AND t.username like concat('%', #{obj.username}, '%')
+        </if>
+        <if test="obj.active != null">
+            AND t.active = #{obj.active}
+        </if>
+        <if test="obj.date != null and obj.date != ''">
+            AND t.start_time <![CDATA[<=]]> #{obj.date}
+            AND t.end_time <![CDATA[>=]]> #{obj.date}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.setting.entity.DarkSettingEntity">
+		select 
+			t1.group_code as groupCode,
+			t2.name as groupName,
+			u.name as name,
+			<include refid="selectColumn"/>
+		from icm_qt_dark_setting as t
+		left join icm_admin_user as u on t.username = u.username and u.tenant_id = #{obj.tenantId} and u.atv_flag = 1 
+		left join icm_admin_group_user as t1 on t.username = t1.username and t1.tenant_id = #{obj.tenantId} and t1.atv_flag = 1 
+		left join icm_admin_group as t2 on t1.group_code = t2.code and t2.type = 2 and t2.tenant_id = #{obj.tenantId} and t2.atv_flag = 1 
+		<where>
+			<if test="obj.busiGroup != null and obj.busiGroup != ''">
+				and t1.group_code = #{obj.busiGroup}
+			</if>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by t.${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_dark_setting as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.setting.vo.DarkSettingVo"
+		resultType="com.kim.quality.setting.entity.DarkSettingEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_dark_setting as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			username,
+			start_time,
+			end_time,
+			active,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.setting.entity.DarkSettingEntity">
+		insert into icm_qt_dark_setting(
+			<include refid="insertField"></include>
+		) values (
+            #{username},
+            #{startTime},
+            #{endTime},
+            #{active},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_dark_setting(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.username},
+            #{item.startTime},
+            #{item.endTime},
+            #{item.active},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.quality.setting.entity.DarkSettingEntity">
+		update icm_qt_dark_setting 
+		<set>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="active != null">
+                active = #{active},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.setting.vo.DarkSettingVo">
+		update icm_qt_dark_setting set atv_flag=0, oper_time = now()
+		where atv_flag = 1 AND tenant_id = #{tenantId} 
+		and id in 
+		<foreach collection="ids" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</update>
+	
+	<update id="active" parameterType="com.kim.quality.setting.vo.DarkSettingVo">
+		update icm_qt_dark_setting set active=#{active}, oper_time = now()
+		where atv_flag = 1 AND tenant_id = #{tenantId} 
+		and id in 
+		<foreach collection="ids" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</update>
+	
+</mapper>

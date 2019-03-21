@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.setting.dao.SampleRuleDetailDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.rule_id as ruleId,
+		t.name as name,
+		t.seq_number as seqNumber,
+		t.resolver as resolver,
+		t.resolver_param as resolverParam,
+		t.digest_name as digestName,
+		t.percent as percent,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.setting.vo.SampleRuleDetailVo"
+		resultType="com.kim.quality.setting.entity.SampleRuleDetailEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_rule_detail as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.ruleId != null">
+            AND t.rule_id = #{obj.ruleId}
+        </if>
+        <if test="obj.name != null and obj.name != ''">
+            AND t.name like concat('%', #{obj.name}, '%')
+        </if>
+        <if test="obj.seqNumber != null">
+            AND t.seq_number = #{obj.seqNumber}
+        </if>
+        <if test="obj.resolver != null and obj.resolver != ''">
+            AND t.resolver = #{obj.resolver}
+        </if>
+        <if test="obj.resolverParam != null and obj.resolverParam != ''">
+            AND t.resolver_param = #{obj.resolverParam}
+        </if>
+        <if test="obj.percent != null">
+            AND t.percent = #{obj.percent}
+        </if>
+		AND t.atv_flag = 1
+        AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.setting.entity.SampleRuleDetailEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_rule_detail as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_sample_rule_detail as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.setting.vo.SampleRuleDetailVo"
+		resultType="com.kim.quality.setting.entity.SampleRuleDetailEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_rule_detail as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			rule_id,
+			name,
+			seq_number,
+			resolver,
+			resolver_param,
+			digest_name,
+			percent,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.setting.entity.SampleRuleDetailEntity">
+		insert into icm_qt_sample_rule_detail(
+			<include refid="insertField"></include>
+		) values (
+            #{ruleId},
+            #{name},
+            #{seqNumber},
+            #{resolver},
+            #{resolverParam},
+            #{digestName},
+            #{percent},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_sample_rule_detail(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.ruleId},
+            #{item.name},
+            #{item.seqNumber},
+            #{item.resolver},
+            #{item.resolverParam},
+            #{item.digestName},
+            #{item.percent},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<update id="update" parameterType="com.kim.quality.setting.entity.SampleRuleDetailEntity">
+		update icm_qt_sample_rule_detail 
+		<set>
+            <if test="ruleId != null">
+                rule_id = #{ruleId},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="seqNumber != null">
+                seq_number = #{seqNumber},
+            </if>
+            <if test="resolver != null">
+                resolver = #{resolver},
+            </if>
+            <if test="resolverParam != null">
+                resolver_param = #{resolverParam},
+            </if>
+            <if test="digestName != null">
+                digest_name = #{digestName},
+            </if>
+            <if test="percent != null">
+                percent = #{percent},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.setting.vo.SampleRuleDetailVo">
+		update icm_qt_sample_rule_detail set atv_flag=0, oper_time = now()
+		where atv_flag = 1
+		<if test="id !=null and id != ''">
+			AND id = #{id}
+		</if>
+		<if test="ruleId !=null and ruleId != ''">
+			AND rule_id = #{ruleId}
+		</if>
+		AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

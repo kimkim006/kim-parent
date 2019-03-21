@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.base.dao.BaseUserOrgDao">
+
+	<select id="listUserOrg" parameterType="com.kim.admin.vo.UserOrgVo"
+			resultType="com.kim.admin.entity.UserOrgEntity">
+		SELECT
+			t.item_code as itemCode, 
+			t.code_type AS codeType, 
+			t.upper_superior AS upperSuperior,
+			t.tenant_id as tenantId
+			
+		FROM icm_admin_user_org_rl t
+		where t.atv_flag=1 and t.tenant_id = #{tenantId}
+		<if test="codeType != null">
+			and t.code_type  = #{codeType}
+		</if>
+		<if test="itemCode != null and itemCode !=''">
+			and t.item_code  = #{itemCode}
+		</if>
+	</select>
+	
+</mapper>

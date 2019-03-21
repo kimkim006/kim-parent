@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.UserDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.username as username,
+		t.name as name,
+		t.phone as phone,
+		t.email as email,
+		DATE_FORMAT(t.join_date,'%Y-%m-%d') as joinDate,
+		DATE_FORMAT(t.leave_date,'%Y-%m-%d') as leaveDate,
+		t.tenant_id as tenantId,
+		t.portrait as portrait,
+		t.origins as origins,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="listAll" resultType="com.kim.admin.entity.UserEntity">
+		select
+			<include refid="selectColumn"/>
+		from icm_admin_user as t
+		where t.atv_flag =1 
+	</select>
+	
+	<select id="list" parameterType="com.kim.admin.vo.UserVo"
+		resultType="com.kim.admin.entity.UserEntity">
+		select
+			<include refid="selectColumn"/>
+		from icm_admin_user as t
+		left JOIN icm_admin_login_user as t1 on t.username = t1.username AND t1.atv_flag =1 AND t1.tenant_id = t.tenant_id
+		<where>
+			<include refid="queryCondition"/>
+			<if test="obj.status != null">
+				AND t1.status = #{obj.status}
+			</if>
+		</where>
+	</select>
+
+	<sql id="queryCondition">
+		<if test="obj.username != null and obj.username != ''">
+			AND t.username like concat('%', #{obj.username}, '%')
+		</if>
+		<if test="obj.name != null and obj.name != ''">
+			AND (t.name like concat('%', #{obj.name}, '%')
+			or t.username like concat('%', #{obj.name}, '%'))
+		</if>
+		<if test="obj.phone != null and obj.phone != ''">
+			AND t.phone like concat('%', #{obj.phone}, '%')
+		</if>
+		<if test="obj.email != null and obj.email != ''">
+			AND t.email like concat('%', #{obj.email}, '%')
+		</if>
+		<if test="obj.joinDate != null and obj.joinDate != ''">
+			AND t.join_date = #{obj.joinDate} 
+		</if>
+		<if test="obj.origins != null and obj.origins != ''">
+			AND t.origins = #{obj.origins}
+		</if>
+		<if test="obj.operUser != null and obj.operUser != ''">
+			AND t.oper_user = #{obj.operUser} 
+		</if>
+		<if test="obj.operName != null and obj.operName != ''">
+			AND t.oper_name = #{obj.operName} 
+		</if>
+		<if test="obj.tenantId != null and obj.tenantId != ''">
+			AND t.tenant_id = #{obj.tenantId}
+		</if>
+		AND t.atv_flag =1 
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserEntity">
+		select
+			t1.status,
+			t2.department_code as departCode,
+			<include refid="selectColumn"/>
+		from icm_admin_user as t
+		left JOIN icm_admin_login_user as t1 on t.username = t1.username AND t1.atv_flag =1 AND t1.tenant_id = t.tenant_id
+		left join icm_admin_department_user_rl as t2 on t.username = t2.username and t2.atv_flag =1 AND t2.tenant_id = t.tenant_id
+		<where>
+			<include refid="queryCondition"/>
+			<if test="obj.status != null">
+				AND t1.status = #{obj.status}
+			</if>
+		</where>
+		order by t.oper_time desc 
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_user as t
+		left JOIN icm_admin_login_user as t1 on t.username = t1.username AND t1.atv_flag =1 AND t1.tenant_id = t.tenant_id
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+			<if test="obj.status != null">
+				AND t1.status = #{obj.status}
+			</if>
+		</trim>
+	</select>
+	
+	<select id="find" parameterType="com.kim.admin.vo.UserVo"
+		resultType="com.kim.admin.entity.UserEntity">
+		select
+			t1.status,
+			t2.department_code as departCode,
+			t3.post_id as postId,
+			<include refid="selectColumn"/>
+		from icm_admin_user as t
+		left JOIN icm_admin_login_user as t1 on t.username = t1.username AND t1.atv_flag =1 AND t1.tenant_id = t.tenant_id
+		left JOIN icm_admin_department_user_rl as t2 on t.username = t2.username and t2.atv_flag =1 AND t2.tenant_id = t.tenant_id
+		left JOIN icm_admin_user_post_rl as t3 on t.username = t3.username and t3.atv_flag =1 AND t3.tenant_id = t.tenant_id
+		where t.atv_flag = 1 
+		<if test="id != null and id !=''">
+			and t.id=#{id}
+		</if>
+		<if test="username != null and username !=''">
+			and t.username = #{username}
+		</if>
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			username,
+			name,
+			phone,
+			email,
+			join_date,
+			leave_date,
+			tenant_id,
+			portrait,
+			origins,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.admin.entity.UserEntity">
+		insert into icm_admin_user(
+			<include refid="insertField"></include>
+		) values (
+			#{username},
+			#{name},
+			#{phone},
+			#{email},
+			#{joinDate, jdbcType=VARCHAR},
+			#{leaveDate, jdbcType=VARCHAR},
+			#{tenantId},
+			#{portrait},
+			#{origins},
+			#{atvFlag},
+			now(),
+			#{operUser},
+			#{operName},
+			#{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_admin_user(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+			#{item.username},
+			#{item.name},
+			#{item.phone},
+			#{item.email},
+			#{item.joinDate},
+			#{item.leaveDate},
+			#{item.tenantId},
+			#{item.portrait},
+			#{item.origins},
+			#{item.atvFlag},
+			now(),
+			#{item.operUser},
+			#{item.operName},
+			#{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.admin.entity.UserEntity">
+		update icm_admin_user 
+		<set>
+			<if test="name != null">
+				name = #{name},
+			</if>
+			<if test="phone != null">
+				phone = #{phone},
+			</if>
+			<if test="email != null">
+				email = #{email},
+			</if>
+			<if test="joinDate != null">
+				join_date = #{joinDate},
+			</if>
+			<if test="leaveDate != null">
+				leave_date = #{leaveDate},
+			</if>
+			<if test="portrait != null">
+				portrait = #{portrait},
+			</if>
+			oper_time = now(),
+			<if test="operUser != null">
+				oper_user = #{operUser},
+			</if>
+			<if test="operName != null">
+				oper_name = #{operName},
+			</if>
+			<if test="remark != null">
+				remark = #{remark},
+			</if>
+		</set>
+		where id=#{id} 
+		and username = #{username}
+		and atv_flag = 1
+		<if test="tenantId != 'DEFAULT'">
+			AND tenant_id = #{tenantId}
+		</if>
+	</update>
+	
+	<update id="updatePortrait" parameterType="com.kim.admin.entity.UserEntity">
+		update icm_admin_user 
+		<set>
+			<if test="portrait != null">
+				portrait = #{portrait},
+			</if>
+		</set>
+		where username = #{username}
+		and atv_flag = 1
+		<if test="tenantId != 'DEFAULT'">
+			AND tenant_id = #{tenantId}
+		</if>
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.UserVo">
+		update icm_admin_user set atv_flag=0, oper_time = now()
+		where username=#{username} 
+		and atv_flag = 1
+		<if test="tenantId != 'DEFAULT'">
+			AND tenant_id = #{tenantId}
+		</if>
+	</update>
+	
+	<select id="listByDepartment" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserEntity">
+		select 
+			t.username as username,
+			t.name as name,
+			DATE_FORMAT(t1.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+			t1.oper_user as operUser,
+			t1.oper_name as operName
+		from icm_admin_user as t
+		left JOIN icm_admin_department_user_rl t1 on t.username = t1.username and t1.atv_flag =1 AND t1.tenant_id = t.tenant_id
+			where t.atv_flag =1 
+			and t1.department_code = #{obj.departmentCode}
+			AND t.tenant_id = #{obj.tenantId}
+			<if test="obj.name != null and obj.name != ''">
+				AND (t.username like concat('%', #{obj.name}, '%')
+				or t.name like concat('%', #{obj.name}, '%'))
+			</if>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType}
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listByDepartment_" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserEntity">
+		select 
+			t.username as username,
+			t.name as name
+		from icm_admin_user as t
+		where t.atv_flag =1 
+			and not exists (select 1 from icm_admin_department_user_rl t1
+				where t.username = t1.username
+				and t1.atv_flag =1 
+				AND t1.tenant_id = t.tenant_id 
+			)
+			AND t.tenant_id = #{obj.tenantId}
+			<if test="obj.name != null and obj.name != ''">
+				AND (t.username like concat('%', #{obj.name}, '%')
+				or t.name like concat('%', #{obj.name}, '%'))
+			</if>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType}
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listByRole" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserEntity">
+		select 
+			t.username as username,
+			t.name as name,
+			DATE_FORMAT(t1.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+			t1.oper_user as operUser,
+			t1.oper_name as operName
+		from icm_admin_user as t
+		left JOIN icm_admin_user_role_rl t1 on t.username = t1.username and t1.atv_flag =1 AND t1.tenant_id = t.tenant_id 
+		where t.atv_flag =1 
+			and t1.role_code = #{obj.roleCode}
+			AND t.tenant_id = #{obj.tenantId}
+			<if test="obj.name != null and obj.name != ''">
+				AND (t.username like concat('%', #{obj.name}, '%')
+				or t.name like concat('%', #{obj.name}, '%'))
+			</if>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType}
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listByRole_" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserEntity">
+		select 
+			t.username as username,
+			t.name as name
+		from icm_admin_user as t
+		where t.atv_flag =1 
+			and not exists (select 1 from icm_admin_user_role_rl t1
+				where t.username = t1.username
+				and t1.role_code = #{obj.roleCode}
+				and t1.atv_flag =1
+				AND t1.tenant_id = t.tenant_id 
+			)
+			AND t.tenant_id = #{obj.tenantId}
+			<if test="obj.name != null and obj.name != ''">
+				AND (t.username like concat('%', #{obj.name}, '%')
+				or t.name like concat('%', #{obj.name}, '%'))
+			</if>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType}
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+
+	<select id="listByGroup" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserEntity">
+		select
+			t.username as username,
+			t.name as name,
+			t1.type as type,
+			DATE_FORMAT(t1.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+			t1.oper_user as operUser,
+			t1.oper_name as operName
+		from icm_admin_user as t
+		left join icm_admin_group_user t1 on t.username = t1.username and t1.atv_flag =1 AND t1.tenant_id = t.tenant_id
+		where t.atv_flag =1
+			and t1.group_code = #{obj.groupCode}
+			AND t.tenant_id = #{obj.tenantId}
+			<if test="obj.groupUserType != null">
+				AND t1.type = #{obj.groupUserType}
+			</if>
+			<if test="obj.name != null and obj.name != ''">
+				AND (t.username like concat('%', #{obj.name}, '%')
+				or t.name like concat('%', #{obj.name}, '%'))
+			</if>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType}
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listByGroup_" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserEntity">
+		select
+			t.username as username,
+			t.name as name
+		from icm_admin_user as t
+		where t.atv_flag =1
+			and not exists (select 1 from icm_admin_group_user t1
+				where t.username = t1.username
+				and t1.atv_flag =1
+				AND t1.tenant_id = t.tenant_id
+			)
+			AND t.tenant_id = #{obj.tenantId}
+			<if test="obj.name != null and obj.name != ''">
+				AND (t.username like concat('%', #{obj.name}, '%')
+				or t.name like concat('%', #{obj.name}, '%'))
+			</if>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType}
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+</mapper>

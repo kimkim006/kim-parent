@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.base.dao.BaseUserAgentDao">
+
+	<select id="listUserAgent" parameterType="com.kim.admin.vo.UserAgentVo"
+			resultType="com.kim.admin.entity.UserAgentEntity">
+		select 
+			t.username as username,
+			t.agent_no as agentNo,
+			t.platform as platform,
+			t.tenant_id as tenantId,
+			t1.agent_pwd as agentPwd
+			
+		from icm_admin_user_agent as t 
+		left join icm_crm_agent_info as t1 on t.agent_no = t1.agent_id and t.platform = t1.platform_type 
+			and t1.atv_flag=1 and t1.tenant_id = t.tenant_id
+		where t.atv_flag=1 and t.tenant_id = #{tenantId}
+		<if test="username != null and username !=''">
+			and t.username  = #{username}
+		</if>
+		<if test="platform != null">
+			and t.platform  = #{platform}
+		</if>
+	</select>
+	
+</mapper>

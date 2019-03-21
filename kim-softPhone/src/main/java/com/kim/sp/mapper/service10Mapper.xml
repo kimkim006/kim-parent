@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.sp.dao.Service10Dao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.service_id as serviceId,
+		t.service_type as serviceType,
+		t.service_phone as servicePhone,
+		t.service_no as serviceNo,
+		t.ani as ani,
+		t.call_type as callType,
+		DATE_FORMAT(t.start_time,'%Y-%m-%d %H:%i:%s') as startTime,
+		DATE_FORMAT(t.end_time,'%Y-%m-%d %H:%i:%s') as endTime,
+		t.name as name,
+		t.username as username,
+		t.agent_id as agentId,
+		t.department_code as departmentCode,
+		t.department_name as departmentName,
+		t.bussiness_type as bussinessType,
+		t.is_booking as isBooking,
+		DATE_FORMAT(t.booking_time,'%Y-%m-%d %H:%i:%s') as bookingTime,
+		t.is_remind as isRemind,
+		t.service_log as serviceLog,
+		t.dnis as dnis,
+		t.area_code as areaCode,
+		t.area_name as areaName,
+		t.dir_type_name as dirTypeName,
+		t.sub_dir_type_name as subDirTypeName,
+		t.reply_status as replyStatus,
+		t.reply_log as replyLog,
+		t.customer_id as customerId,
+		t.customer_name as customerName,
+		t.customer_type as customerType,
+		t.record_id as recordId,
+		DATE_FORMAT(t.disconnect_time,'%Y-%m-%d %H:%i:%s') as disconnectTime,
+		DATE_FORMAT(t.connect_time,'%Y-%m-%d %H:%i:%s') as connectTime,
+		t.is_bind_wx as isBindWx,
+		t.push_date as pushDate,
+		t.customer_call_id as customerCallId,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.sp.vo.Service10Vo"
+		resultType="com.kim.sp.entity.Service10Entity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_service10 as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.serviceId != null and obj.serviceId != ''">
+            AND t.service_id = #{obj.serviceId}
+        </if>
+        <if test="obj.serviceType != null and obj.serviceType != ''">
+            AND t.service_type = #{obj.serviceType}
+        </if>
+        <if test="obj.servicePhone != null and obj.servicePhone != ''">
+            AND t.service_phone = #{obj.servicePhone}
+        </if>
+        <if test="obj.serviceNo != null and obj.serviceNo != ''">
+            AND t.service_no = #{obj.serviceNo}
+        </if>
+        <if test="obj.ani != null and obj.ani != ''">
+            AND t.ani = #{obj.ani}
+        </if>
+        <if test="obj.callType != null and obj.callType != ''">
+            AND t.call_type = #{obj.callType}
+        </if>
+        <if test="obj.startTime != null">
+            AND t.start_time = #{obj.startTime}
+        </if>
+		<if test="obj.startTimeStart != null and obj.startTimeStart != ''">
+            AND t.start_time <![CDATA[>=]]> #{obj.startTimeStart}
+        </if>
+        <if test="obj.startTimeEnd != null and obj.startTimeEnd != ''">
+            AND t.start_time <![CDATA[<=]]> #{obj.startTimeEnd}
+        </if>
+        <if test="obj.endTime != null">
+            AND t.end_time = #{obj.endTime}
+        </if>
+		<if test="obj.endTimeStart != null and obj.endTimeStart != ''">
+            AND t.end_time <![CDATA[>=]]> #{obj.endTimeStart}
+        </if>
+        <if test="obj.endTimeEnd != null and obj.endTimeEnd != ''">
+            AND t.end_time <![CDATA[<=]]> #{obj.endTimeEnd}
+        </if>
+        <if test="obj.name != null and obj.name != ''">
+            AND t.name like concat('%', #{obj.name}, '%')
+        </if>
+        <if test="obj.username != null and obj.username != ''">
+            AND t.username = #{obj.username}
+        </if>
+        <if test="obj.agentId != null and obj.agentId != ''">
+            AND t.agent_id = #{obj.agentId}
+        </if>
+        <if test="obj.departmentCode != null and obj.departmentCode != ''">
+            AND t.department_code = #{obj.departmentCode}
+        </if>
+        <if test="obj.departmentName != null and obj.departmentName != ''">
+            AND t.department_name = #{obj.departmentName}
+        </if>
+        <if test="obj.bussinessType != null and obj.bussinessType != ''">
+            AND t.bussiness_type = #{obj.bussinessType}
+        </if>
+        <if test="obj.isBooking != null and obj.isBooking != ''">
+            AND t.is_booking = #{obj.isBooking}
+        </if>
+        <if test="obj.bookingTime != null">
+            AND t.booking_time = #{obj.bookingTime}
+        </if>
+		<if test="obj.bookingTimeStart != null and obj.bookingTimeStart != ''">
+            AND t.booking_time <![CDATA[>=]]> #{obj.bookingTimeStart}
+        </if>
+        <if test="obj.bookingTimeEnd != null and obj.bookingTimeEnd != ''">
+            AND t.booking_time <![CDATA[<=]]> #{obj.bookingTimeEnd}
+        </if>
+        <if test="obj.isRemind != null and obj.isRemind != ''">
+            AND t.is_remind = #{obj.isRemind}
+        </if>
+        <if test="obj.serviceLog != null and obj.serviceLog != ''">
+            AND t.service_log = #{obj.serviceLog}
+        </if>
+        <if test="obj.dnis != null and obj.dnis != ''">
+            AND t.dnis = #{obj.dnis}
+        </if>
+        <if test="obj.areaCode != null and obj.areaCode != ''">
+            AND t.area_code = #{obj.areaCode}
+        </if>
+        <if test="obj.areaName != null and obj.areaName != ''">
+            AND t.area_name = #{obj.areaName}
+        </if>
+        <if test="obj.dirTypeName != null and obj.dirTypeName != ''">
+            AND t.dir_type_name = #{obj.dirTypeName}
+        </if>
+        <if test="obj.subDirTypeName != null and obj.subDirTypeName != ''">
+            AND t.sub_dir_type_name = #{obj.subDirTypeName}
+        </if>
+        <if test="obj.replyStatus != null and obj.replyStatus != ''">
+            AND t.reply_status = #{obj.replyStatus}
+        </if>
+        <if test="obj.replyLog != null and obj.replyLog != ''">
+            AND t.reply_log = #{obj.replyLog}
+        </if>
+        <if test="obj.customerId != null and obj.customerId != ''">
+            AND t.customer_id = #{obj.customerId}
+        </if>
+        <if test="obj.customerName != null and obj.customerName != ''">
+            AND t.customer_name = #{obj.customerName}
+        </if>
+        <if test="obj.customerType != null and obj.customerType != ''">
+            AND t.customer_type = #{obj.customerType}
+        </if>
+        <if test="obj.recordId != null and obj.recordId != ''">
+            AND t.record_id = #{obj.recordId}
+        </if>
+        <if test="obj.disconnectTime != null">
+            AND t.disconnect_time = #{obj.disconnectTime}
+        </if>
+		<if test="obj.disconnectTimeStart != null and obj.disconnectTimeStart != ''">
+            AND t.disconnect_time <![CDATA[>=]]> #{obj.disconnectTimeStart}
+        </if>
+        <if test="obj.disconnectTimeEnd != null and obj.disconnectTimeEnd != ''">
+            AND t.disconnect_time <![CDATA[<=]]> #{obj.disconnectTimeEnd}
+        </if>
+        <if test="obj.connectTime != null">
+            AND t.connect_time = #{obj.connectTime}
+        </if>
+		<if test="obj.connectTimeStart != null and obj.connectTimeStart != ''">
+            AND t.connect_time <![CDATA[>=]]> #{obj.connectTimeStart}
+        </if>
+        <if test="obj.connectTimeEnd != null and obj.connectTimeEnd != ''">
+            AND t.connect_time <![CDATA[<=]]> #{obj.connectTimeEnd}
+        </if>
+        <if test="obj.isBindWx != null">
+            AND t.is_bind_wx = #{obj.isBindWx}
+        </if>
+        <if test="obj.pushDate != null">
+            AND t.push_date = #{obj.pushDate}
+        </if>
+        <if test="obj.customerCallId != null and obj.customerCallId != ''">
+            AND t.customer_call_id = #{obj.customerCallId}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.sp.entity.Service10Entity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_service10 as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_crm_service10 as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.sp.vo.Service10Vo"
+		resultType="com.kim.sp.entity.Service10Entity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_service10 as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			service_id,
+			service_type,
+			service_phone,
+			service_no,
+			ani,
+			call_type,
+			start_time,
+			end_time,
+			name,
+			username,
+			agent_id,
+			department_code,
+			department_name,
+			bussiness_type,
+			is_booking,
+			booking_time,
+			is_remind,
+			service_log,
+			dnis,
+			area_code,
+			area_name,
+			dir_type_name,
+			sub_dir_type_name,
+			reply_status,
+			reply_log,
+			customer_id,
+			customer_name,
+			customer_type,
+			record_id,
+			disconnect_time,
+			connect_time,
+			is_bind_wx,
+			push_date,
+			customer_call_id,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.kim.sp.entity.Service10Entity">
+		insert into icm_crm_service10(
+			<include refid="insertField"></include>
+		) values (
+            #{serviceId},
+            #{serviceType},
+            #{servicePhone},
+            #{serviceNo},
+            #{ani},
+            #{callType},
+            #{startTime},
+            #{endTime},
+            #{name},
+            #{username},
+            #{agentId},
+            #{departmentCode},
+            #{departmentName},
+            #{bussinessType},
+            #{isBooking},
+            #{bookingTime},
+            #{isRemind},
+            #{serviceLog},
+            #{dnis},
+            #{areaCode},
+            #{areaName},
+            #{dirTypeName},
+            #{subDirTypeName},
+            #{replyStatus},
+            #{replyLog},
+            #{customerId},
+            #{customerName},
+            #{customerType},
+            #{recordId},
+            #{disconnectTime},
+            #{connectTime},
+            #{isBindWx},
+            #{pushDate},
+            #{customerCallId},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_crm_service10(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.serviceId},
+            #{item.serviceType},
+            #{item.servicePhone},
+            #{item.serviceNo},
+            #{item.ani},
+            #{item.callType},
+            #{item.startTime},
+            #{item.endTime},
+            #{item.name},
+            #{item.username},
+            #{item.agentId},
+            #{item.departmentCode},
+            #{item.departmentName},
+            #{item.bussinessType},
+            #{item.isBooking},
+            #{item.bookingTime},
+            #{item.isRemind},
+            #{item.serviceLog},
+            #{item.dnis},
+            #{item.areaCode},
+            #{item.areaName},
+            #{item.dirTypeName},
+            #{item.subDirTypeName},
+            #{item.replyStatus},
+            #{item.replyLog},
+            #{item.customerId},
+            #{item.customerName},
+            #{item.customerType},
+            #{item.recordId},
+            #{item.disconnectTime},
+            #{item.connectTime},
+            #{item.isBindWx},
+            #{item.pushDate},
+            #{item.customerCallId},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.sp.entity.Service10Entity">
+		update icm_crm_service10 
+		<set>
+            <if test="serviceType != null">
+                service_type = #{serviceType},
+            </if>
+            <if test="servicePhone != null">
+                service_phone = #{servicePhone},
+            </if>
+            <if test="serviceNo != null">
+                service_no = #{serviceNo},
+            </if>
+            <if test="ani != null">
+                ani = #{ani},
+            </if>
+            <if test="callType != null">
+                call_type = #{callType},
+            </if>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="agentId != null">
+                agent_id = #{agentId},
+            </if>
+            <if test="departmentCode != null">
+                department_code = #{departmentCode},
+            </if>
+            <if test="departmentName != null">
+                department_name = #{departmentName},
+            </if>
+            <if test="bussinessType != null">
+                bussiness_type = #{bussinessType},
+            </if>
+            <if test="isBooking != null">
+                is_booking = #{isBooking},
+            </if>
+            <if test="bookingTime != null">
+                booking_time = #{bookingTime},
+            </if>
+            <if test="isRemind != null">
+                is_remind = #{isRemind},
+            </if>
+            <if test="serviceLog != null">
+                service_log = #{serviceLog},
+            </if>
+            <if test="dnis != null">
+                dnis = #{dnis},
+            </if>
+            <if test="areaCode != null">
+                area_code = #{areaCode},
+            </if>
+            <if test="areaName != null">
+                area_name = #{areaName},
+            </if>
+            <if test="dirTypeName != null">
+                dir_type_name = #{dirTypeName},
+            </if>
+            <if test="subDirTypeName != null">
+                sub_dir_type_name = #{subDirTypeName},
+            </if>
+            <if test="replyStatus != null">
+                reply_status = #{replyStatus},
+            </if>
+            <if test="replyLog != null">
+                reply_log = #{replyLog},
+            </if>
+            <if test="customerId != null">
+                customer_id = #{customerId},
+            </if>
+            <if test="customerName != null">
+                customer_name = #{customerName},
+            </if>
+            <if test="customerType != null">
+                customer_type = #{customerType},
+            </if>
+            <if test="recordId != null">
+                record_id = #{recordId},
+            </if>
+            <if test="disconnectTime != null">
+                disconnect_time = #{disconnectTime},
+            </if>
+            <if test="connectTime != null">
+                connect_time = #{connectTime},
+            </if>
+            <if test="isBindWx != null">
+                is_bind_wx = #{isBindWx},
+            </if>
+            <if test="pushDate != null">
+                push_date = #{pushDate},
+            </if>
+            <if test="customerCallId != null">
+                customer_call_id = #{customerCallId},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where service_id = #{serviceId}
+			and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.sp.vo.Service10Vo">
+		update icm_crm_service10 set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

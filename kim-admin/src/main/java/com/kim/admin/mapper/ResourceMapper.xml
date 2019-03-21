@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.ResourceDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.name as name,
+		t.code as code,
+		t.module_code as moduleCode,
+		t.url as url,
+		t.method as method,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.admin.vo.ResourceVo"
+		resultType="com.kim.base.entity.ResourceEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_resource as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.name != null and obj.name != ''">
+            AND (
+			t.name like concat('%', #{obj.name}, '%')
+			or t.code like concat('%', #{obj.name}, '%')
+			)
+        </if>
+        <if test="obj.url != null and obj.url != ''">
+            AND t.url = #{obj.url}
+        </if>
+        <if test="obj.method != null and obj.method != ''">
+            AND t.method = #{obj.method}
+        </if>
+        AND t.atv_flag = 1
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.base.entity.ResourceEntity">
+		select
+			t1.name as moduleName,
+			<include refid="selectColumn"/>
+		from icm_admin_resource as t
+		left JOIN icm_admin_module as t1 on t.module_code = t1.code
+		<where>
+			<if test="obj.menuCode != null and obj.menuCode != ''">
+				and t.CODE
+				<if test="obj.menuCodeExpect == 1">
+					not
+				</if>
+				in(SELECT t1.resource_code
+				FROM icm_admin_menu_resource_rl AS t1
+				WHERE t1.menu_code = #{obj.menuCode}
+					AND t1.atv_flag = 1
+				)
+			</if>
+			<if test="obj.moduleCode != null and obj.moduleCode != ''">
+				AND (
+					t1.name like concat('%', #{obj.moduleCode}, '%')
+					or
+					t.module_code like concat('%', #{obj.moduleCode}, '%')
+				)
+			</if>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_resource as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	 
+	<select id="find" parameterType="com.kim.admin.vo.ResourceVo"
+		resultType="com.kim.base.entity.ResourceEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_resource as t 
+		where t.id=#{id} and t.atv_flag = 1
+		limit 1
+	</select>
+	
+	<update id="update" parameterType="com.kim.base.entity.ResourceEntity">
+		update icm_admin_resource 
+		<set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="code != null">
+                code = #{code},
+            </if>
+            <if test="moduleCode != null">
+                module_code = #{moduleCode},
+            </if>
+            <if test="url != null">
+                url = #{url},
+            </if>
+            <if test="method != null">
+                method = #{method},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.ResourceVo">
+		update icm_admin_resource set atv_flag=0 
+		where id=#{id} and atv_flag = 1
+	</update>
+	
+</mapper>

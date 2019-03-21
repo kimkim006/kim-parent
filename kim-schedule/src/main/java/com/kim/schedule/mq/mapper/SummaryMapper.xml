@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.schedule.mq.dao.SummaryDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.parent_code as parentCode,
+		t.code as code,
+		t.name as name,
+		t.origin_parent_code as originParentCode,
+		t.origin_code as originCode,
+		t.level,
+		t.source as source,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.SummaryVo"
+		resultType="com.kim.quality.business.entity.SummaryEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_summary as t
+		where t.source = #{obj.source}
+			AND t.atv_flag = 1
+	    	AND t.tenant_id = #{obj.tenantId}
+	</select>
+		
+	<sql id="insertField">
+			parent_code,
+			code,
+			name,
+			origin_parent_code,
+			origin_code,
+			level,
+			source,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.SummaryEntity">
+		insert into icm_qt_summary(
+			<include refid="insertField"></include>
+		) values (
+            #{parentCode},
+            #{code},
+            #{name},
+            #{originParentCode},
+            #{originCode},
+            #{level},
+            #{source},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_summary(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.parentCode},
+            #{item.code},
+            #{item.name},
+            #{item.originParentCode},
+            #{item.originCode},
+            #{item.level},
+            #{item.source},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<update id="update" parameterType="com.kim.quality.business.entity.SummaryEntity">
+		update icm_qt_summary 
+		<set>
+            <if test="parentCode != null">
+                parent_code = #{parentCode},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="originParentCode != null">
+                origin_parent_code = #{originParentCode},
+            </if>
+            <if test="level != null">
+                level = #{level},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where code = #{code} 
+			and source = #{source}
+			and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.business.vo.SummaryVo">
+		update icm_qt_summary set atv_flag=0, oper_time = now()
+		where code = #{code} 
+			and atv_flag = 1
+			AND tenant_id = #{tenantId}
+			and source = #{source}
+	</update>
+	
+</mapper>

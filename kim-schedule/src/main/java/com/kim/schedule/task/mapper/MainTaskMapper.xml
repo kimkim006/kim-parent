@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.schedule.task.dao.MainTaskDao">
+	
+	<update id="updateTaskConfirm" parameterType="java.util.Map">
+		update icm_qt_main_task 
+		 <!-- 10坐席已确认 -->
+		set status= 10,
+		oper_time = now(),
+        oper_user = #{operUser},
+        oper_name = #{operName}
+        <!-- 4结果反馈, 8申诉成功 9申诉驳回 -->
+		where (status= 4 or status = 8 or status = 9) 
+			and last_process_time <![CDATA[<]]> #{date}
+			and atv_flag = 1
+			<if test="tenantId != null and tenantId != ''">
+				AND tenant_id = #{tenantId}
+			</if>
+	</update>
+	
+</mapper>

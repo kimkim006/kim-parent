@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.AllocateDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.act_batch_no as actBatchNo,
+		t.detail as detail,
+		t.user_count as userCount,
+		t.total_count as totalCount,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.AllocateVo"
+		resultType="com.kim.quality.business.entity.AllocateEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_allocate as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+		<if test="obj.operTimeStart != null and obj.operTimeStart != ''">
+			AND t.oper_time <![CDATA[>=]]> #{obj.operTimeStart}
+		</if>
+		<if test="obj.operTimeEnd != null and obj.operTimeEnd != ''">
+			AND t.oper_time <![CDATA[<=]]> #{obj.operTimeEnd}
+		</if>
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.actBatchNo != null and obj.actBatchNo != ''">
+            AND t.act_batch_no = #{obj.actBatchNo}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.AllocateEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_allocate as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		order by t.oper_time desc
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="find" parameterType="com.kim.quality.business.vo.AllocateVo"
+		resultType="com.kim.quality.business.entity.AllocateEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_allocate as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			act_batch_no,
+			detail,
+			user_count,
+			total_count,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.AllocateEntity">
+		insert into icm_qt_task_allocate(
+			<include refid="insertField"></include>
+		) values (
+            #{actBatchNo},
+            #{detail},
+            #{userCount},
+            #{totalCount},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_task_allocate(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.actBatchNo},
+            #{item.detail},
+            #{item.userCount},
+            #{item.totalCount},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+</mapper>

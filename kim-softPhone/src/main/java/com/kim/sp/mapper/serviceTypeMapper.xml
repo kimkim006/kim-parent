@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.sp.dao.ServiceTypeDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.service_type_id as serviceTypeId,
+		t.service_type_name as serviceTypeName,
+		t.create_organ_id as createOrganId,
+		t.type as type,
+		t.parent_type_id as parentTypeId,
+		t.service_type_kind as serviceTypeKind,
+		t.service_level as serviceLevel,
+		t.display_no as displayNo,
+		t.is_active as isActive,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.sp.vo.ServiceTypeVo"
+		resultType="com.kim.sp.entity.ServiceTypeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_service_type as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.serviceTypeId != null and obj.serviceTypeId != ''">
+            AND t.service_type_id = #{obj.serviceTypeId}
+        </if>
+        <if test="obj.serviceTypeName != null and obj.serviceTypeName != ''">
+            AND t.service_type_name = #{obj.serviceTypeName}
+        </if>
+        <if test="obj.createOrganId != null and obj.createOrganId != ''">
+            AND t.create_organ_id = #{obj.createOrganId}
+        </if>
+        <if test="obj.type != null and obj.type != ''">
+            AND t.type = #{obj.type}
+        </if>
+        <if test="obj.parentTypeId != null and obj.parentTypeId != ''">
+            AND t.parent_type_id = #{obj.parentTypeId}
+        </if>
+        <if test="obj.serviceTypeKind != null and obj.serviceTypeKind != ''">
+            AND t.service_type_kind = #{obj.serviceTypeKind}
+        </if>
+        <if test="obj.serviceLevel != null">
+            AND t.service_level = #{obj.serviceLevel}
+        </if>
+        <if test="obj.displayNo != null">
+            AND t.display_no = #{obj.displayNo}
+        </if>
+        <if test="obj.isActive != null and obj.isActive != ''">
+            AND t.is_active = #{obj.isActive}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.sp.entity.ServiceTypeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_service_type as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_crm_service_type as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.sp.vo.ServiceTypeVo"
+		resultType="com.kim.sp.entity.ServiceTypeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_service_type as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			service_type_id,
+			service_type_name,
+			create_organ_id,
+			type,
+			parent_type_id,
+			service_type_kind,
+			service_level,
+			display_no,
+			is_active,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.kim.sp.entity.ServiceTypeEntity">
+		insert into icm_crm_service_type(
+			<include refid="insertField"></include>
+		) values (
+            #{serviceTypeId},
+            #{serviceTypeName},
+            #{createOrganId},
+            #{type},
+            #{parentTypeId},
+            #{serviceTypeKind},
+            #{serviceLevel},
+            #{displayNo},
+            #{isActive},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_crm_service_type(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.serviceTypeId},
+            #{item.serviceTypeName},
+            #{item.createOrganId},
+            #{item.type},
+            #{item.parentTypeId},
+            #{item.serviceTypeKind},
+            #{item.serviceLevel},
+            #{item.displayNo},
+            #{item.isActive},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.sp.entity.ServiceTypeEntity">
+		update icm_crm_service_type 
+		<set>
+            <if test="serviceTypeId != null">
+                service_type_id = #{serviceTypeId},
+            </if>
+            <if test="serviceTypeName != null">
+                service_type_name = #{serviceTypeName},
+            </if>
+            <if test="createOrganId != null">
+                create_organ_id = #{createOrganId},
+            </if>
+            <if test="type != null">
+                type = #{type},
+            </if>
+            <if test="parentTypeId != null">
+                parent_type_id = #{parentTypeId},
+            </if>
+            <if test="serviceTypeKind != null">
+                service_type_kind = #{serviceTypeKind},
+            </if>
+            <if test="serviceLevel != null">
+                service_level = #{serviceLevel},
+            </if>
+            <if test="displayNo != null">
+                display_no = #{displayNo},
+            </if>
+            <if test="isActive != null">
+                is_active = #{isActive},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.sp.vo.ServiceTypeVo">
+		update icm_crm_service_type set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

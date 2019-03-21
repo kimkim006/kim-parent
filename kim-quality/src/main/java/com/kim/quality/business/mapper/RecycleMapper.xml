@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.RecycleDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.rcy_batch_no as rcyBatchNo,
+		t.detail as detail,
+		t.user_count as userCount,
+		t.total_count as totalCount,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.RecycleVo"
+		resultType="com.kim.quality.business.entity.RecycleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_recycle as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+		<if test="obj.operTimeStart != null and obj.operTimeStart != ''">
+			AND t.oper_time <![CDATA[>=]]> #{obj.operTimeStart}
+		</if>
+		<if test="obj.operTimeEnd != null and obj.operTimeEnd != ''">
+			AND t.oper_time <![CDATA[<=]]> #{obj.operTimeEnd}
+		</if>
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.rcyBatchNo != null and obj.rcyBatchNo != ''">
+            AND t.rcy_batch_no = #{obj.rcyBatchNo}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.RecycleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_recycle as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		order by t.oper_time desc
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_task_recycle as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.business.vo.RecycleVo"
+		resultType="com.kim.quality.business.entity.RecycleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_task_recycle as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			rcy_batch_no,
+			detail,
+			user_count,
+			total_count,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.RecycleEntity">
+		insert into icm_qt_task_recycle(
+			<include refid="insertField"></include>
+		) values (
+            #{rcyBatchNo},
+            #{detail},
+            #{userCount},
+            #{totalCount},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<select id="listUserByBacth" parameterType="java.util.HashMap"
+		resultType="java.util.HashMap">
+		select 
+			tt.*,
+			t1.name
+		from 
+		(
+			select 
+				t.inspector,
+				count(1) count
+			from icm_qt_main_task as t
+			where t.atv_flag = 1 AND t.tenant_id = #{obj.tenantId}
+			and t.status = ${@MainTask@STATUS_TO_EVALUATION}
+	    	<choose>
+	    		<when test="obj.batchNos != null and obj.batchNos.size() > 0">
+	    			and t.batch_no in
+			    	<foreach collection="obj.batchNos" item="item" open="(" separator="," close=")">
+			    		#{item}
+			    	</foreach>
+	    		</when>
+	    		<otherwise>
+	    			AND t.batch_no = #{obj.batchNo}
+	    		</otherwise>
+	    	</choose>
+	    	group by t.inspector
+    	) as tt 
+    	left join icm_admin_user as t1 on t1.username = tt.inspector and t1.atv_flag = 1 and t1.tenant_id = #{obj.tenantId}
+    	order by tt.inspector
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listUserByBacthCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from 
+		(
+			select 
+				t.inspector,
+				count(1) count
+			from icm_qt_main_task as t
+			where t.atv_flag = 1 AND t.tenant_id = #{obj.tenantId}
+			and t.status = ${@MainTask@STATUS_TO_EVALUATION}
+	    	<choose>
+	    		<when test="obj.batchNos != null and obj.batchNos.size() > 0">
+	    			and t.batch_no in
+			    	<foreach collection="obj.batchNos" item="item" open="(" separator="," close=")">
+			    		#{item}
+			    	</foreach>
+	    		</when>
+	    		<otherwise>
+	    			AND t.batch_no = #{obj.batchNo}
+	    		</otherwise>
+	    	</choose>
+	    	group by t.inspector
+    	) as tt 
+	</select>
+	
+</mapper>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.schedule.task.dao.UserDao">
+	
+	<select id="listBusiGroupUser" parameterType="String" resultType="com.kim.schedule.task.entity.UserAgentMapping">
+		select 
+			t.agent_no as agentNo,
+			t.username as username,
+			t1.group_code as groupCode,
+			t1.type as type,
+			t.tenant_id as tenantId
+		from icm_admin_user_agent as t
+		left join icm_admin_group_user as t1 on t.username = t1.username 
+			and t1.atv_flag = 1 and t1.type = 0 
+			and t1.tenant_id = #{tenantId}
+		left join icm_admin_group t2 on t1.group_code = t2.code 
+			and t2.tenant_id = t1.tenant_id 
+			and t2.type = 2 
+			and t2.atv_flag = 1
+			and t2.tenant_id = #{tenantId}
+		where t.atv_flag = 1 
+			and t.tenant_id = #{tenantId}
+			and t.platform = '${@com.kim.common.constant.CommonConstants@PLATFORM_CISCO}'
+	</select>
+	
+	<select id="listAllTenant" resultType="String">
+		select 
+			t.tenant_id 
+		from icm_admin_tenant as t 
+		where t.atv_flag = 1 
+			and t.tenant_id != 'DEFAULT' 
+	</select>
+	
+</mapper>

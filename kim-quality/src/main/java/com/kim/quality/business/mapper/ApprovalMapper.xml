@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.ApprovalDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.task_id as taskId,
+		t.agent_id as agentId,
+		t.inspector as inspector,
+		t.type as type,
+		t.upstream_id as upstreamId,
+		t.submitter as submitter,
+		DATE_FORMAT(t.submit_time,'%Y-%m-%d %H:%i:%s') as submitTime,
+		t.auditor as auditor,
+		DATE_FORMAT(t.approval_time,'%Y-%m-%d %H:%i:%s') as approvalTime,
+		t.content as content,
+		t.mistake as mistake,
+		t.status as status,
+		t.is_last as isLast,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="listKey" parameterType="com.kim.quality.business.vo.ApprovalVo"
+		resultType="com.kim.quality.business.entity.ApprovalEntity">
+		select 
+			t.id as id,
+			DATE_FORMAT(t.submit_time,'%Y-%m-%d %H:%i:%s') as submitTime
+		from icm_qt_approval as t
+		where t.task_id = #{taskId}
+		AND t.tenant_id = #{tenantId}
+		AND t.atv_flag = 1
+	</select>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.ApprovalVo"
+		resultType="com.kim.quality.business.entity.ApprovalEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_approval as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.taskId != null and obj.taskId != ''">
+            AND t.task_id = #{obj.taskId}
+        </if>
+        <if test="obj.agentId != null and obj.agentId != ''">
+            AND t.agent_id = #{obj.agentId}
+        </if>
+        <if test="obj.inspector != null and obj.inspector != ''">
+            AND t.inspector = #{obj.inspector}
+        </if>
+        <if test="obj.type != null">
+            AND t.type = #{obj.type}
+        </if>
+        <if test="obj.upstreamId != null">
+            AND t.upstream_id = #{obj.upstreamId}
+        </if>
+        <if test="obj.submitter != null and obj.submitter != ''">
+            AND t.submitter = #{obj.submitter}
+        </if>
+        <if test="obj.submitTime != null and obj.submitTime != ''">
+            AND t.submit_time = #{obj.submitTime}
+        </if>
+        <if test="obj.auditor != null and obj.auditor != ''">
+            AND t.auditor = #{obj.auditor}
+        </if>
+        <if test="obj.approvalTime != null and obj.approvalTime != ''">
+            AND t.approval_time = #{obj.approvalTime}
+        </if>
+        <if test="obj.content != null and obj.content != ''">
+            AND t.content = #{obj.content}
+        </if>
+        <if test="obj.mistake != null">
+            AND t.mistake = #{obj.mistake}
+        </if>
+        <if test="obj.status != null">
+            AND t.status = #{obj.status}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.ApprovalEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_approval as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_approval as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+
+	<select id="find" parameterType="com.kim.quality.business.vo.ApprovalVo"
+			resultType="com.kim.quality.business.entity.ApprovalEntity">
+		select
+		<include refid="selectColumn"/>
+		from icm_qt_approval as t
+		where t.atv_flag = 1
+		<if test="id != null and id != ''">
+			AND t.id = #{id}
+		</if>
+		AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			task_id,
+			agent_id,
+			inspector,
+			type,
+			upstream_id,
+			submitter,
+			submit_time,
+			auditor,
+			approval_time,
+			content,
+			mistake,
+			status,
+			is_last,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.kim.quality.business.entity.ApprovalEntity">
+		insert into icm_qt_approval(
+			<include refid="insertField"></include>
+		) values (
+            #{taskId},
+            #{agentId},
+            #{inspector},
+            #{type},
+            #{upstreamId},
+            #{submitter},
+            date_add(now(), interval 1 second),
+            #{auditor},
+            #{approvalTime},
+            #{content},
+            #{mistake},
+            #{status},
+            #{isLast},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_approval(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.taskId},
+            #{item.agentId},
+            #{item.inspector},
+            #{item.type},
+            #{item.upstreamId},
+            #{item.submitter},
+            date_add(now(), interval 1 second),
+            #{item.auditor},
+            #{item.approvalTime},
+            #{item.content},
+            #{item.mistake},
+            #{item.status},
+            #{item.isLast},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.quality.business.entity.ApprovalEntity">
+		update icm_qt_approval 
+		<set>
+            <if test="approvalTime != null">
+                approval_time = #{approvalTime},
+            </if>
+            <if test="content != null">
+                content = #{content},
+            </if>
+            <if test="mistake != null">
+                mistake = #{mistake},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			and type = #{type}
+			and task_id = #{taskId}
+			and tenant_id = #{tenantId}
+	</update>
+
+	<select id="getApprovalIds" parameterType="com.kim.quality.business.vo.ApprovalVo"
+			resultType="java.lang.String">
+		select
+		t.id as id
+		from icm_qt_approval as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		ORDER by t.oper_time
+	</select>
+	
+	<update id="clearPre" parameterType="com.kim.quality.business.vo.ApprovalVo">
+		update icm_qt_approval set is_last = ${@com.kim.quality.business.enums.MainTask@ITEM_IS_LAST_N}
+		where atv_flag = 1 AND tenant_id = #{tenantId}
+			and task_id = #{taskId}
+	</update>
+	
+	<select id="listLast" parameterType="com.kim.quality.business.vo.ApprovalVo" resultType="String">
+		select 
+			t.id 
+		from icm_qt_approval as t
+		where  t.atv_flag = 1 and t.tenant_id = #{tenantId}
+		and t.submit_time = (
+			select max(tt.submit_time) from icm_qt_approval as tt 
+			where tt.task_id = t.task_id and tt.tenant_id = t.tenant_id and tt.atv_flag = 1
+		);
+	</select>
+	
+	<update id="updateLastById" parameterType="com.kim.quality.business.vo.ApprovalVo">
+		update icm_qt_approval set is_last = #{isLast}
+		where atv_flag = 1 AND tenant_id = #{tenantId}
+			and id 
+			<choose>
+				<when test="isIn != null and isIn != '' and isIn == true">
+					in 
+				</when>
+				<otherwise>
+					not in 
+				</otherwise>
+			</choose>
+			<foreach collection="idList" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+	</update>
+	
+</mapper>

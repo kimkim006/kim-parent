@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.UserRoleDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.username as username,
+		t.role_code as roleCode,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName
+	</sql>
+	
+	<select id="list" parameterType="com.kim.admin.vo.UserRoleVo"
+		resultType="com.kim.admin.entity.UserRoleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_user_role_rl as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.username != null and obj.username != ''">
+            AND t.username = #{obj.username}
+        </if>
+        <if test="obj.roleCode != null and obj.roleCode != ''">
+            AND t.role_code = #{obj.roleCode}
+        </if>
+		AND tenant_id = #{obj.tenantId}
+        AND t.atv_flag = 1
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserRoleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_user_role_rl as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_user_role_rl as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	 
+	<select id="find" parameterType="com.kim.admin.vo.UserRoleVo"
+		resultType="com.kim.admin.entity.UserRoleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_user_role_rl as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			username,
+			role_code,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.admin.entity.UserRoleEntity">
+		insert into icm_admin_user_role_rl(
+			<include refid="insertField"></include>
+		) values (
+            #{username},
+            #{roleCode},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_admin_user_role_rl(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.username},
+            #{item.roleCode},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName}
+		)
+		</foreach>
+	</insert>
+
+	<update id="update" parameterType="com.kim.admin.entity.UserRoleEntity">
+		update icm_admin_user_role_rl 
+		<set>
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="roleCode != null">
+                role_code = #{roleCode},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+		AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.UserRoleVo">
+		update icm_admin_user_role_rl set atv_flag=0, oper_time = now()
+		where atv_flag = 1
+		and username=#{username}
+		<if test="delRoleList != null and delRoleList.size()>0">
+			and role_code in
+			<foreach collection="delRoleList" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="roleCode != null and roleCode != ''">
+			AND role_code = #{roleCode}
+		</if>
+		AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

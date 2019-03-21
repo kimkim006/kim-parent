@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.DepartmentDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.name as name,
+		t.code as code,
+		t.parent_code as parentCode,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="listByTenantId" parameterType="String"
+		resultType="com.kim.admin.entity.DepartmentEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_department as t
+		where t.tenant_id = #{tenantId}
+			AND t.atv_flag = 1 
+	</select>
+	
+	<select id="list" parameterType="com.kim.admin.vo.DepartmentVo"
+		resultType="com.kim.admin.entity.DepartmentEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_department as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+	
+	<sql id="queryCondition">
+		<if test="obj.id != null">
+			AND t.id = #{obj.id} 
+		</if>
+		<if test="obj.name != null and obj.name != ''">
+			AND t.name like concat('%', #{obj.name}, '%')
+		</if>
+		<if test="obj.code != null and obj.code != ''">
+			AND t.code = #{obj.code} 
+		</if>
+		<if test="obj.parentCode != null and obj.parentCode != ''">
+			AND t.parent_code = #{obj.parentCode} 
+		</if>
+		AND tenant_id = #{obj.tenantId}
+		AND t.atv_flag = 1 
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.DepartmentEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_department as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_department as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="checkUnique" parameterType="com.kim.admin.vo.DepartmentVo"
+		resultType="String">
+		select 
+			id
+		from icm_admin_department as t 
+		where t.atv_flag = 1
+		AND tenant_id = #{tenantId}
+		AND t.id != #{id}
+		AND t.code = #{code}
+		limit 1
+	</select>
+	 
+	<select id="find" parameterType="com.kim.admin.vo.DepartmentVo"
+		resultType="com.kim.admin.entity.DepartmentEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_department as t 
+		where t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		<if test="code != null and code != ''">
+			AND t.code = #{code}
+		</if>
+		<if test="id != null and id != ''">
+			AND t.id = #{id}
+		</if>
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			name,
+			code,
+			parent_code,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.admin.entity.DepartmentEntity">
+		insert into icm_admin_department(
+			<include refid="insertField"></include>
+		) values (
+            #{name},
+            #{code},
+            #{parentCode},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_admin_department(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.name},
+            #{item.code},
+            #{item.parentCode},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.admin.entity.DepartmentEntity">
+		update icm_admin_department 
+		<set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="code != null">
+                code = #{code},
+            </if>
+            <if test="parentCode != null">
+                parent_code = #{parentCode},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+		AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.DepartmentVo">
+		update icm_admin_department set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+		AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

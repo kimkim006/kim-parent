@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.base.dao.BaseOperDao">
+
+	<sql id="insertModuleField">
+			name,
+			code,
+			service_id,
+			class_name,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insertModule" parameterType="com.kim.base.entity.ModuleEntity">
+		insert into icm_admin_module(
+			<include refid="insertModuleField"></include>
+		) values (
+            #{name},
+            #{code},
+            #{serviceId},
+            #{className},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertModuleBatch" parameterType="java.util.List">
+		insert into icm_admin_module(
+			<include refid="insertModuleField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.name},
+            #{item.code},
+            #{item.serviceId},
+            #{item.className},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<delete id="deleteAllModule" parameterType="java.util.HashMap">
+		delete from icm_admin_module
+		where atv_flag = 1 and service_id = #{serviceId}
+	</delete>
+
+	<update id="activeModule" parameterType="java.util.HashMap">
+		update icm_admin_module set atv_flag=1
+		where atv_flag = 0 and service_id = #{serviceId}
+	</update>
+	
+	
+	
+	<sql id="insertResourceField">
+			name,
+			code,
+			service_id,
+			module_code,
+			url,
+			method,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insertResource" parameterType="com.kim.base.entity.ResourceEntity">
+		insert into icm_admin_resource(
+			<include refid="insertResourceField"></include>
+		) values (
+            #{name},
+            #{code},
+            #{serviceId},
+            #{moduleCode},
+            #{url},
+            #{method},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertResourceBatch" parameterType="java.util.List">
+		insert into icm_admin_resource(
+			<include refid="insertResourceField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.name},
+            #{item.code},
+            #{item.serviceId},
+            #{item.moduleCode},
+            #{item.url},
+            #{item.method},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<delete id="deleteAllResource" parameterType="java.util.HashMap">
+		delete from icm_admin_resource
+		where atv_flag = 1 and service_id = #{serviceId}
+	</delete>
+
+	<update id="activeResource" parameterType="java.util.HashMap">
+		update icm_admin_resource set atv_flag=1
+		where atv_flag = 0 and service_id = #{serviceId}
+	</update>
+	
+	
+	<sql id="insertOperLogField">
+			service_id,
+			tenant_id,
+			module_name,
+			operation_name,
+			ip_address,
+			content,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name
+	</sql>
+		
+	<insert id="insertOperLog" parameterType="com.kim.log.entity.OperateLogsEntity">
+		insert into icm_admin_oper_log(
+			<include refid="insertOperLogField"></include>
+		) values (
+            #{serviceId},
+            #{tenantId},
+            #{moduleName},
+            #{operationName},
+            #{ipAddress},
+            #{content},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName}
+		)
+	</insert>
+	
+	<insert id="insertOperLogBatch" parameterType="java.util.List">
+		insert into icm_admin_oper_log(
+			<include refid="insertOperLogField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.serviceId},
+            #{item.tenantId},
+            #{item.moduleName},
+            #{item.operationName},
+            #{item.ipAddress},
+            #{item.content},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName}
+		)
+		</foreach>
+	</insert>
+	
+	<select id="findParam" parameterType="java.util.HashMap" resultType="String">
+		select 
+			t.value as value
+		from icm_admin_param as t 
+		where t.atv_flag = 1
+            AND t.code = #{code}
+            <if test="tenantId != null and tenantId != ''">
+            	and t.tenant_id = #{tenantId}
+            </if>
+		limit 1
+	</select>
+	
+	<select id="findFirstDict" parameterType="java.util.HashMap" resultType="String">
+		select 
+			code
+		from icm_admin_dict as t 
+		where t.atv_flag = 1 
+            AND t.id = #{id}
+            AND t.parent_id = '0'
+            <choose>
+				<when test="tenantId != null and tenantId != ''">
+					and t.tenant_id = #{tenantId}
+				</when>
+				<otherwise>
+					and (t.tenant_id = '' or t.tenant_id is null) 
+				</otherwise>
+			</choose>
+		limit 1
+	</select>
+	
+	<select id="listDictByCode" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		select 
+			t.code as code, 
+			t.name as name
+		from icm_admin_dict as t
+		left join icm_admin_dict as t1 on t1.id = t.parent_id AND t1.atv_flag = 1
+		<choose>
+			<when test="tenantId != null and tenantId != ''">
+				and t1.tenant_id = t.tenant_id
+			</when>
+			<otherwise>
+				and (t1.tenant_id = '' or t1.tenant_id is null) 
+			</otherwise>
+		</choose>
+		where t1.code = #{code} AND t.atv_flag = 1 
+        <choose>
+        	<when test="tenantId != null and tenantId == 'ALL'">
+			</when>
+			<when test="tenantId != null and tenantId != ''">
+				and t.tenant_id = #{tenantId}
+			</when>
+			<otherwise>
+				and (t.tenant_id = '' or t.tenant_id is null) 
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="listAllTenant" resultType="java.util.HashMap">
+		select 
+			t.tenant_id as tenantId,
+			t.name as name
+		from icm_admin_tenant as t
+		where t.atv_flag = 1
+	</select>
+	
+</mapper>

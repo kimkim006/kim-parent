@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.SampleDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.batch_no as batchNo,
+		t.mode_code as modeCode,
+		t.business_code as businessCode,
+		t.rule_id as ruleId,
+		t.sample_type as sampleType,
+		DATE_FORMAT(t.extract_date,'%Y-%m-%d') as extractDate,
+		t.extract_num as extractNum,
+		t.assignable_num as assignableNum,
+		t.delete_num as deleteNum,
+		(t.extract_num - t.assignable_num - t.delete_num) as allcateNum,
+		t.status as status,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.SampleVo"
+		resultType="com.kim.quality.business.entity.SampleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.batchNo != null and obj.batchNo != ''">
+            AND t.batch_no = #{obj.batchNo}
+        </if>
+        <if test="obj.batchNos != null and obj.batchNos.size() > 0 ">
+            AND t.batch_no in 
+            <foreach collection="obj.batchNos" item="item" open="(" separator="," close=")">
+            	#{item}
+            </foreach>
+        </if>
+        <if test="obj.businessCode != null and obj.businessCode != ''">
+            AND t.business_code = #{obj.businessCode}
+        </if>
+        <if test="obj.ruleId != null and obj.ruleId != ''">
+            AND t.rule_id = #{obj.ruleId}
+        </if>
+        <if test="obj.sampleType != null and obj.sampleType != ''">
+            AND t.sample_type = #{obj.sampleType}
+        </if>
+        <if test="obj.extractDate != null and obj.extractDate != ''">
+            AND t.extract_date = #{obj.extractDate}
+        </if>
+        <if test="obj.extractDateStart != null and obj.extractDateStart != ''">
+            AND t.extract_date <![CDATA[>=]]> #{obj.extractDateStart}
+        </if>
+        <if test="obj.extractDateEnd != null and obj.extractDateEnd != ''">
+            AND t.extract_date <![CDATA[<=]]> #{obj.extractDateEnd}
+        </if>
+        <if test="obj.status != null">
+            AND t.status = #{obj.status}
+        </if>
+        <if test="obj.statusArr != null and obj.statusArr.size() > 0 ">
+            AND t.status in 
+            <foreach collection="obj.statusArr" item="item" open="(" separator="," close=")">
+            	#{item}
+            </foreach>
+        </if>
+		AND t.atv_flag = 1
+       	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.SampleEntity">
+		select 
+			t1.name as ruleName,
+			<include refid="selectColumn"/>
+		from icm_qt_sample as t
+		left join (
+			select t.* from 
+			icm_qt_sample_rule as t
+			where t.atv_flag = 1
+       			AND t.tenant_id = #{obj.tenantId}
+		
+		) as t1 on t.rule_id = t1.id
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		order by t.oper_time desc 
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_sample as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.business.vo.SampleVo"
+		resultType="com.kim.quality.business.entity.SampleEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample as t 
+		where t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+			<if test="id != null and id != ''">
+				and t.id=#{id}
+			</if>
+			<if test="batchNo != null and batchNo != ''">
+				and t.batch_no = #{batchNo}
+			</if>
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			batch_no,
+			mode_code,
+			business_code,
+			rule_id,
+			sample_type,
+			extract_date,
+			extract_num,
+			assignable_num,
+			status,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.SampleEntity"
+		keyProperty="id" useGeneratedKeys="true">
+		insert into icm_qt_sample(
+			<include refid="insertField"></include>
+		) values (
+            #{batchNo},
+            #{modeCode},
+            #{businessCode},
+            #{ruleId},
+            #{sampleType},
+            #{extractDate},
+            #{extractNum},
+            #{assignableNum},
+            #{status},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_sample(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.batchNo},
+            #{item.modeCode},
+            #{item.businessCode},
+            #{item.ruleId},
+            #{item.sampleType},
+            #{item.extractDate},
+            #{item.extractNum},
+            #{item.assignableNum},
+            #{item.status},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.quality.business.entity.SampleEntity">
+		update icm_qt_sample 
+		<set>
+            <if test="extractNum != null">
+                extract_num = #{extractNum},
+            </if>
+            <if test="assignableNum != null">
+                assignable_num = #{assignableNum},
+            </if>
+            <if test="deleteNum != null">
+                delete_num = #{deleteNum},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="updateStatus" parameterType="com.kim.quality.business.entity.SampleEntity">
+		update icm_qt_sample 
+		<set>
+			<if test="allcateNum != null">
+                assignable_num = assignable_num - #{allcateNum},
+            </if>
+			<if test="recycleNum != null">
+                assignable_num = assignable_num + #{recycleNum},
+            </if>
+            <if test="deleteNum != null">
+                assignable_num = assignable_num - #{deleteNum},
+                delete_num = delete_num + #{deleteNum},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where batch_no=#{batchNo} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="correctStatus" parameterType="com.kim.quality.business.entity.SampleEntity">
+		update icm_qt_sample set status = ${@com.kim.quality.business.entity.SampleEntity@STATUS_SUCCESS}
+		where batch_no=#{batchNo} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+			and assignable_num = extract_num
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.business.vo.SampleVo">
+		update icm_qt_sample set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

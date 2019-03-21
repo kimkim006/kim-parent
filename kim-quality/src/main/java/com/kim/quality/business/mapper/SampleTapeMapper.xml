@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.SampleTapeDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.tape_id as tapeId,
+		t.batch_no as batchNo,
+		t.main_task_id as mainTaskId,
+		t.serial_number as serialNumber,
+		t.satisfaction_type as satisfactionType,
+		t.contract_no as contractNo,
+		t.busi_group_code as busiGroupCode,
+		t.cust_name as custName,
+		t.cust_phone as custPhone,
+		t.agent_phone as agentPhone,
+		t.agent_id as agentId,
+		t.agent_name as agentName,
+		t.agent_no as agentNo,
+		t.record_time as recordTime,
+		DATE_FORMAT(t.start_time,'%Y-%m-%d %H:%i:%s') as startTime,
+		DATE_FORMAT(t.end_time,'%Y-%m-%d %H:%i:%s') as endTime,
+		t.type as type,
+		t.direction as direction,
+		t.hangup_type as hangupType,
+		t.platform as platform,
+		t.service_no as serviceNo,
+		t.media_type as mediaType,
+		t.address as address,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.quality.business.vo.SampleTapeVo"
+		resultType="com.kim.quality.business.entity.SampleTapeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_tape as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.tapeId != null and obj.tapeId != ''">
+            AND t.tape_id = #{obj.tapeId}
+        </if>
+        <if test="obj.batchNo != null and obj.batchNo != ''">
+            AND t.batch_no = #{obj.batchNo}
+        </if>
+        <if test="obj.mainTaskId != null and obj.mainTaskId != ''">
+            AND t.main_task_id = #{obj.mainTaskId}
+        </if>
+        <if test="obj.serialNumber != null and obj.serialNumber != ''">
+            AND t.serial_number = #{obj.serialNumber}
+        </if>
+        <if test="obj.satisfactionType != null">
+            AND t.satisfaction_type = #{obj.satisfactionType}
+        </if>
+        <if test="obj.contractNo != null and obj.contractNo != ''">
+            AND t.contract_no = #{obj.contractNo}
+        </if>
+        <if test="obj.busiGroupCode != null and obj.busiGroupCode != ''">
+            AND t.busi_group_code = #{obj.busiGroupCode}
+        </if>
+        <if test="obj.custName != null and obj.custName != ''">
+            AND t.cust_name = #{obj.custName}
+        </if>
+        <if test="obj.custPhone != null and obj.custPhone != ''">
+            AND t.cust_phone = #{obj.custPhone}
+        </if>
+        <if test="obj.agentPhone != null and obj.agentPhone != ''">
+            AND t.agent_phone = #{obj.agentPhone}
+        </if>
+        <if test="obj.agentId != null and obj.agentId != ''">
+            AND t.agent_id = #{obj.agentId}
+        </if>
+        <if test="obj.agentNo != null and obj.agentNo != ''">
+            AND t.agent_no = #{obj.agentNo}
+        </if>
+        <if test="obj.recordTime != null">
+            AND t.record_time = #{obj.recordTime}
+        </if>
+        <if test="obj.startTime != null and obj.startTime != ''">
+            AND t.start_time = #{obj.startTime}
+        </if>
+        <if test="obj.type != null">
+            AND t.type = #{obj.type}
+        </if>
+        <if test="obj.hangupType != null">
+            AND t.hangup_type = #{obj.hangupType}
+        </if>
+        <if test="obj.platform != null and obj.platform != ''">
+            AND t.platform = #{obj.platform}
+        </if>
+        <if test="obj.serviceNo != null and obj.serviceNo != ''">
+            AND t.service_no = #{obj.serviceNo}
+        </if>
+        <if test="obj.mediaType != null and obj.mediaType != ''">
+            AND t.media_type = #{obj.mediaType}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.SampleTapeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_tape as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_sample_tape as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.business.vo.SampleTapeVo"
+		resultType="com.kim.quality.business.entity.SampleTapeEntity">
+		select 
+			t1.cust_id_card as 'ivrInfo.custIdCard',
+			t1.ivr_verify as 'ivrInfo.ivrVerify',
+			t2.type_code as 'summary.typeCode',
+			t2.first_code as 'summary.firstCode',
+			t2.second_code as 'summary.secondCode',
+			t2.third_code as 'summary.thirdCode',
+			t2.forth_code as 'summary.forthCode',
+			t3.name as 'summary.typeName',
+			t4.name as 'summary.firstName',
+			t5.name as 'summary.secondName',
+			t6.name as 'summary.thirdName',
+			t7.name as 'summary.forthName',
+			<include refid="selectColumn"/>
+		from icm_qt_sample_tape as t 
+		left join icm_qt_ivr_info as t1 on t.serial_number = t1.serial_number and t1.tenant_id =#{tenantId} and t1.atv_flag = 1
+		left join icm_qt_tape_summary as t2 on t.serial_number = t2.serial_number and t2.tenant_id =#{tenantId} and t2.atv_flag = 1
+		left join icm_qt_summary as t3 on t3.code = t2.type_code and t3.tenant_id =#{tenantId} and t3.atv_flag = 1
+		left join icm_qt_summary as t4 on t4.code = t2.first_code and t4.tenant_id =#{tenantId} and t4.atv_flag = 1
+		left join icm_qt_summary as t5 on t5.code = t2.second_code and t5.tenant_id =#{tenantId} and t5.atv_flag = 1
+		left join icm_qt_summary as t6 on t6.code = t2.third_code and t6.tenant_id =#{tenantId} and t6.atv_flag = 1
+		left join icm_qt_summary as t7 on t7.code = t2.forth_code and t7.tenant_id =#{tenantId} and t7.atv_flag = 1
+		where t.atv_flag = 1 AND t.tenant_id = #{tenantId}
+		<choose>
+			<when test="id != null and id != ''">
+				and t.id=#{id}
+			</when>
+			<otherwise>
+				and t.main_task_id = #{mainTaskId}
+			</otherwise>
+		</choose>
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			tape_id,
+			batch_no,
+			main_task_id,
+			serial_number,
+			satisfaction_type,
+			contract_no,
+			busi_group_code,
+			cust_name,
+			cust_phone,
+			agent_phone,
+			agent_id,
+			agent_name,
+			agent_no,
+			record_time,
+			start_time,
+			end_time,
+			type,
+			direction,
+			hangup_type,
+			platform,
+			service_no,
+			media_type,
+			address,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_sample_tape(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.tapeId},
+            #{item.batchNo},
+            #{item.mainTaskId},
+            #{item.serialNumber},
+            #{item.satisfactionType},
+            #{item.contractNo},
+            #{item.busiGroupCode},
+            #{item.custName},
+            #{item.custPhone},
+            #{item.agentPhone},
+            #{item.agentId},
+            #{item.agentName},
+            #{item.agentNo},
+            #{item.recordTime},
+            #{item.startTime},
+            #{item.endTime},
+            #{item.type},
+            #{item.direction},
+            #{item.hangupType},
+            #{item.platform},
+            #{item.serviceNo},
+            #{item.mediaType},
+            #{item.address},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.business.vo.SampleTapeVo">
+		update icm_qt_sample_tape set atv_flag=0, oper_time = now()
+		where batch_no=#{batchNo} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+			<if test="mainTaskIdList != null and mainTaskIdList.size()>0">
+				and main_task_id in
+				<foreach collection="mainTaskIdList" item="item" open="(" separator="," close=")">
+		        	#{item}
+		        </foreach>
+			</if>
+	</update>
+	
+</mapper>

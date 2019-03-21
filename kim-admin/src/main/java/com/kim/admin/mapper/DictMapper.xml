@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.DictDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.parent_id as parentId,
+		t.code as code,
+		t.name as name,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.admin.vo.DictVo"
+		resultType="com.kim.admin.entity.DictEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_dict as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.parentId != null and obj.parentId != ''">
+            AND t.parent_id = #{obj.parentId}
+        </if>
+        <if test="obj.code != null and obj.code != ''">
+            AND t.code = #{obj.code}
+        </if>
+        <if test="obj.name != null and obj.name != ''">
+            AND (t.name like concat('%', #{obj.name}, '%')
+            or t.code like concat('%', #{obj.name}, '%'))
+        </if>
+        <if test="obj.tenantId != null and obj.tenantId != ''">
+			AND (t.tenant_id = #{obj.tenantId}
+				 or t.tenant_id = '' or t.tenant_id is null)
+		</if>
+		AND t.atv_flag = 1
+	</sql>
+	
+	<select id="listFirstByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.DictEntity">
+		select 
+			tt.name as tenantName,
+			t.id as id,
+			t.parent_id as parentId,
+			t.code as parentCode,
+			t.name as parentName,
+			t.tenant_id as tenantId,
+			t.atv_flag as atvFlag,
+			DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+			t.oper_user as operUser,
+			t.oper_name as operName,
+			t.remark as remark,
+			(select count(1) from icm_admin_dict as t1 where t1.parent_id = t.id 
+				and t1.atv_flag = 1 AND t1.tenant_id = t.tenant_id
+			) as count
+		from icm_admin_dict as t
+		left join icm_admin_tenant as tt on t.tenant_id = tt.tenant_id and tt.atv_flag = 1
+		where t.parent_id = ${@DictEntity@DEFAULT_PARENT_ID}
+			<include refid="queryCondition"/>
+		order by t.code, t.oper_time desc 
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<select id="listFirstByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select count(1) as count
+		from icm_admin_dict as t
+		where t.parent_id = ${@DictEntity@DEFAULT_PARENT_ID}
+			<include refid="queryCondition"/>
+	</select>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.DictEntity">
+		select 
+			tt.name as tenantName,
+			t1.code as parentCode,
+			t1.name as parentName,
+			<include refid="selectColumn"/>
+		from icm_admin_dict as t
+		left join icm_admin_tenant as tt on t.tenant_id = tt.tenant_id and tt.atv_flag = 1
+		left join icm_admin_dict as t1 on t.parent_id = t1.id and t1.atv_flag = 1
+			and t1.parent_id = ${@DictEntity@DEFAULT_PARENT_ID}
+			AND t1.tenant_id = t.tenant_id
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		order by t.parent_id, t.code, t.oper_time desc 
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_dict as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.admin.vo.DictVo"
+		resultType="com.kim.admin.entity.DictEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_dict as t 
+		where t.atv_flag = 1 
+		<if test="id != null">
+            AND t.id = #{id}
+        </if>
+		<if test="code != null and code != ''">
+            AND t.code = #{code}
+        </if>
+		<if test="parentId != null and parentId != ''">
+            AND t.parent_id = #{parentId}
+        </if>
+        <if test="tenantId != null and tenantId != ''">
+			AND t.tenant_id = #{tenantId}
+		</if>
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			parent_id,
+			code,
+			name,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.admin.entity.DictEntity">
+		insert into icm_admin_dict(
+			<include refid="insertField"></include>
+		) values (
+            #{parentId},
+            #{code},
+            #{name},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_admin_dict(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.parentId},
+            #{item.code},
+            #{item.name},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.admin.entity.DictEntity">
+		update icm_admin_dict 
+		<set>
+            <if test="parentId != null">
+                parent_id = #{parentId},
+            </if>
+            <if test="code != null">
+                code = #{code},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+		<if test="tenantId != null and tenantId != ''">
+			AND tenant_id = #{tenantId}
+		</if>
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.DictVo">
+		update icm_admin_dict set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+		<if test="tenantId != null and tenantId != ''">
+			AND tenant_id = #{tenantId}
+		</if>
+	</update>
+	
+</mapper>

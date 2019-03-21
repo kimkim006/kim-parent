@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.schedule.task.dao.TapeDao">
+
+	
+	<sql id="insertField">
+			id,
+			sync_id,
+			serial_number,
+			type,
+			direction,
+			satisfaction_type,
+			contract_no,
+			busi_group_code,
+			cust_name,
+			cust_phone,
+			agent_phone,
+			agent_name,
+			agent_no,
+			agent_id,
+			record_time,
+			start_time,
+			end_time,
+			hangup_type,
+			platform,
+			service_no,
+			media_type,
+			address,
+			localpath,
+			localfile,
+			recserverip,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.quality.business.entity.TapeEntity">
+		insert into icm_qt_tape(
+			<include refid="insertField"></include>
+		) values (
+            #{id},
+            #{syncId},
+            #{serialNumber},
+            #{type},
+            #{direction},
+            #{satisfactionType},
+            #{contractNo},
+            #{busiGroupCode},
+            #{custName},
+            #{custPhone},
+            #{agentPhone},
+            #{agentName},
+            #{agentNo},
+            #{agentId},
+            #{recordTime},
+            #{startTime},
+            #{endTime},
+            #{hangupType},
+            #{platform},
+            #{serviceNo},
+            #{mediaType},
+            #{address},
+            #{localpath},
+            #{localfile},
+            #{recserverip},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_qt_tape(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.id},
+            #{item.syncId},
+            #{item.serialNumber},
+            #{item.type},
+            #{item.direction},
+            #{item.satisfactionType},
+            #{item.contractNo},
+            #{item.busiGroupCode},
+            #{item.custName},
+            #{item.custPhone},
+            #{item.agentPhone},
+            #{item.agentName},
+            #{item.agentNo},
+            #{item.agentId},
+            #{item.recordTime},
+            #{item.startTime},
+            #{item.endTime},
+            #{item.hangupType},
+            #{item.platform},
+            #{item.serviceNo},
+            #{item.mediaType},
+            #{item.address},
+            #{item.localpath},
+            #{item.localfile},
+            #{item.recserverip},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	
+	<update id="deleteLogic" parameterType="com.kim.quality.business.vo.TapeVo">
+		update icm_qt_tape set atv_flag=0, oper_time = now()
+		where atv_flag = 1 AND tenant_id = #{tenantId}
+			and start_time <![CDATA[>=]]> #{startTime}
+			and start_time <![CDATA[<=]]> #{endTime}
+			and type = #{type}
+			and platform = #{platform}
+			<if test="serviceNos != null and serviceNos.size()>0">
+				AND service_no IN
+				<foreach collection="serviceNos" item="item" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="agentNos != null and agentNos.size()>0">
+				AND agent_no IN 
+				<foreach collection="agentNos" item="item" open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+				
+	</update>
+	
+	<insert id="insertSync" parameterType="com.kim.quality.business.entity.TapeSyncEntity"
+		keyProperty="id" useGeneratedKeys="true">
+		insert into icm_qt_tape_sync(
+			time_date,
+			type,
+			start_time,
+			end_time,
+			total_count,
+			status,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+		) values (
+            #{timeDate},
+            #{type},
+            now(),
+            #{endTime},
+            #{totalCount},
+            #{status},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<update id="updateSync" parameterType="com.kim.quality.business.entity.TapeSyncEntity">
+		update icm_qt_tape_sync 
+		<set>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="totalCount != null">
+                total_count = #{totalCount},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			<if test="tenantId != null and tenantId != ''">
+				AND tenant_id = #{tenantId}
+			</if>
+	</update>
+	
+</mapper>

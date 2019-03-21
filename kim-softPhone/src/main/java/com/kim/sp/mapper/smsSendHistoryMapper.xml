@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.sp.dao.SmsSendHistoryDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.app_code as appCode,
+		t.business_no as businessNo,
+		t.business_type as businessType,
+		t.temp_code as tempCode,
+		t.phone as phone,
+		t.customer_call_id as customerCallId,
+		t.name as name,
+		t.username as username,
+		t.agent_id as agentId,
+		t.sub_code as subCode,
+		t.sms_resp_res as smsRespRes,
+		t.sms_resp_no as smsRespNo,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.sp.vo.SmsSendHistoryVo"
+		resultType="com.kim.sp.entity.SmsSendHistoryEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_sms_send_history as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.appCode != null and obj.appCode != ''">
+            AND t.app_code = #{obj.appCode}
+        </if>
+        <if test="obj.businessNo != null and obj.businessNo != ''">
+            AND t.business_no = #{obj.businessNo}
+        </if>
+        <if test="obj.businessType != null and obj.businessType != ''">
+            AND t.business_type = #{obj.businessType}
+        </if>
+        <if test="obj.tempCode != null and obj.tempCode != ''">
+            AND t.temp_code = #{obj.tempCode}
+        </if>
+        <if test="obj.phone != null and obj.phone != ''">
+            AND t.phone = #{obj.phone}
+        </if>
+        <if test="obj.customerCallId != null and obj.customerCallId != ''">
+            AND t.customer_call_id = #{obj.customerCallId}
+        </if>
+        <if test="obj.name != null and obj.name != ''">
+            AND t.name like concat('%', #{obj.name}, '%')
+        </if>
+        <if test="obj.username != null and obj.username != ''">
+            AND t.username = #{obj.username}
+        </if>
+        <if test="obj.agentId != null and obj.agentId != ''">
+            AND t.agent_id = #{obj.agentId}
+        </if>
+        <if test="obj.subCode != null and obj.subCode != ''">
+            AND t.sub_code = #{obj.subCode}
+        </if>
+        <if test="obj.smsRespRes != null and obj.smsRespRes != ''">
+            AND t.sms_resp_res = #{obj.smsRespRes}
+        </if>
+        <if test="obj.smsRespNo != null and obj.smsRespNo != ''">
+            AND t.sms_resp_no = #{obj.smsRespNo}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.sp.entity.SmsSendHistoryEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_sms_send_history as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_crm_sms_send_history as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.sp.vo.SmsSendHistoryVo"
+		resultType="com.kim.sp.entity.SmsSendHistoryEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_sms_send_history as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			app_code,
+			business_no,
+			business_type,
+			temp_code,
+			phone,
+			customer_call_id,
+			name,
+			username,
+			agent_id,
+			sub_code,
+			sms_resp_res,
+			sms_resp_no,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.kim.sp.entity.SmsSendHistoryEntity">
+		insert into icm_crm_sms_send_history(
+			<include refid="insertField"></include>
+		) values (
+            #{appCode},
+            #{businessNo},
+            #{businessType},
+            #{tempCode},
+            #{phone},
+            #{customerCallId},
+            #{name},
+            #{username},
+            #{agentId},
+            #{subCode},
+            #{smsRespRes},
+            #{smsRespNo},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_crm_sms_send_history(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.appCode},
+            #{item.businessNo},
+            #{item.businessType},
+            #{item.tempCode},
+            #{item.phone},
+            #{item.customerCallId},
+            #{item.name},
+            #{item.username},
+            #{item.agentId},
+            #{item.subCode},
+            #{item.smsRespRes},
+            #{item.smsRespNo},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.sp.entity.SmsSendHistoryEntity">
+		update icm_crm_sms_send_history 
+		<set>
+            <if test="appCode != null">
+                app_code = #{appCode},
+            </if>
+            <if test="businessNo != null">
+                business_no = #{businessNo},
+            </if>
+            <if test="businessType != null">
+                business_type = #{businessType},
+            </if>
+            <if test="tempCode != null">
+                temp_code = #{tempCode},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="customerCallId != null">
+                customer_call_id = #{customerCallId},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="agentId != null">
+                agent_id = #{agentId},
+            </if>
+            <if test="subCode != null">
+                sub_code = #{subCode},
+            </if>
+            <if test="smsRespRes != null">
+                sms_resp_res = #{smsRespRes},
+            </if>
+            <if test="smsRespNo != null">
+                sms_resp_no = #{smsRespNo},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.sp.vo.SmsSendHistoryVo">
+		update icm_crm_sms_send_history set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

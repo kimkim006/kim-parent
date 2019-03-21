@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.UserPostDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.username as username,
+		t.post_id as postId,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.admin.vo.UserPostVo"
+		resultType="com.kim.admin.entity.UserPostEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_user_post_rl as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.username != null and obj.username != ''">
+            AND t.username = #{obj.username}
+        </if>
+        <if test="obj.postId != null">
+            AND t.post_id = #{obj.postId}
+        </if>
+        AND t.tenant_id = #{obj.tenantId}
+		AND t.atv_flag = 1
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.UserPostEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_user_post_rl as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_user_post_rl as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="checkExist" parameterType="com.kim.admin.vo.UserPostVo"
+		resultType="String">
+		select 
+			id
+		from icm_admin_user_post_rl as t 
+		where t.atv_flag = 1
+		AND tenant_id = #{tenantId}
+		AND t.username = #{username}
+		AND t.post_id = #{postId}
+		limit 1
+	</select>
+	 
+	<select id="find" parameterType="com.kim.admin.vo.UserPostVo"
+		resultType="com.kim.admin.entity.UserPostEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_user_post_rl as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			username,
+			post_id,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.admin.entity.UserPostEntity">
+		insert into icm_admin_user_post_rl(
+			<include refid="insertField"></include>
+		) values (
+            #{username},
+            #{postId},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_admin_user_post_rl(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.username},
+            #{item.postId},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.UserPostVo">
+		update icm_admin_user_post_rl set atv_flag=0, oper_time = now()
+		where atv_flag = 1
+		AND username = #{username}
+		AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

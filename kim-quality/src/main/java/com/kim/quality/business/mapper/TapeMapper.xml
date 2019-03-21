@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.quality.business.dao.TapeDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.id as tapeId,
+		t.serial_number as serialNumber,
+		t.type as type,
+		t.satisfaction_type as satisfactionType,
+		t.contract_no as contractNo,
+		t.busi_group_code as busiGroupCode,
+		t.cust_name as custName,
+		t.agent_id as agentId,
+		t.cust_phone as custPhone,
+		t.agent_phone as agentPhone,
+		t.agent_name as agentName,
+		t.agent_no as agentNo,
+		t.record_time as recordTime,
+		DATE_FORMAT(t.start_time,'%Y-%m-%d %H:%i:%s') as startTime,
+		DATE_FORMAT(t.end_time,'%Y-%m-%d %H:%i:%s') as endTime,
+		t.direction as direction,
+		t.hangup_type as hangupType,
+		t.platform as platform,
+		t.service_no as serviceNo,
+		t.media_type as mediaType,
+		t.address as address,
+		t.localpath as localpath,
+		t.localfile as localfile,
+		t.recserverip as recserverip,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="listByAgent" parameterType="com.kim.quality.business.vo.TapeVo"
+		resultType="com.kim.quality.business.entity.SampleTapeEntity">
+		SELECT 
+		    a.*
+		FROM (<include refid="baseQuery"/>) AS a
+		WHERE (
+			SELECT COUNT(*) FROM (<include refid="baseQuery"/>) AS b
+		    WHERE b.agentId = a.agentId AND b.id <![CDATA[>=]]> a.id
+		) <![CDATA[<=]]> #{obj.limit}
+		ORDER BY a.agentId ASC
+	</select>
+	
+	<sql id="baseQuery">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_tape as t
+		<where>
+			<include refid="queryCondition"/>
+			<include refid="duplicateRemoveCondition"/>
+		</where>
+	</sql>
+	
+	<select id="listForSample" parameterType="com.kim.quality.business.vo.TapeVo"
+		resultType="com.kim.quality.business.entity.SampleTapeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_tape as t
+		<include refid="conditionTable"></include>
+		<where>
+			<include refid="listQueryCondition"/>
+		</where>
+		<if test="obj.limit != null">
+			order by rand() limit #{obj.limit}
+		</if>
+	</select>
+	
+	<sql id="conditionTable">
+		<if test="obj.userType != null and obj.userType != ''">
+			inner join (
+				select 
+					datediff(now(),t1.join_date) as joinDay,
+					t1.username
+				from icm_admin_user as t1
+				where t1.atv_flag = 1 AND t1.tenant_id = #{obj.tenantId}
+			) as tmp on t.agent_id = tmp.username 
+			<choose>
+				<when test="obj.userType == 'NEW'">
+					AND tmp.joinDay <![CDATA[<=]]> 90
+				</when>
+				<otherwise>
+					AND tmp.joinDay <![CDATA[>]]> 90
+				</otherwise>
+			</choose>
+		</if>
+		
+		<if test="obj.typeCode != null and obj.typeCode != ''">
+			inner join icm_qt_tape_summary as t2 on t.serial_number = t2.serial_number 
+			and t2.atv_flag = 1 
+			AND t2.tenant_id = #{obj.tenantId}
+	        AND t2.type_code = #{obj.typeCode}
+	        <if test="obj.firstCode != null and obj.firstCode != ''">
+	            AND t2.first_code = #{obj.firstCode}
+	        </if>
+	        <if test="obj.secondCode != null and obj.secondCode != ''">
+	            AND t2.second_code = #{obj.secondCode}
+	        </if>
+	        <if test="obj.thirdCode != null and obj.thirdCode != ''">
+	            AND t2.third_code = #{obj.thirdCode}
+	        </if>
+	        <if test="obj.forthCode != null and obj.forthCode != ''">
+	            AND t2.forth_code = #{obj.forthCode}
+	        </if>
+		</if>
+	</sql>
+	
+	<sql id="listQueryCondition">
+		<include refid="queryCondition"/>
+		<include refid="duplicateRemoveCondition"></include>
+	</sql>
+	
+	<sql id="duplicateRemoveCondition">
+		and (select count(1) from icm_qt_sample_tape as st 
+			where t.id = st.tape_id 
+			AND st.tenant_id = #{obj.tenantId} 
+			AND st.atv_flag = 1 
+			AND st.start_time <![CDATA[>=]]> #{obj.startTime}
+			AND st.start_time <![CDATA[<=]]> #{obj.endTime}
+		) = 0
+	</sql>
+	
+	<select id="listCount" parameterType="com.kim.quality.business.vo.TapeVo"
+		resultType="int">
+		select 
+			count(1) as count 
+		from icm_qt_tape as t
+		<include refid="conditionTable"></include>
+		<where>
+			<include refid="listQueryCondition"/>
+		</where>
+	</select>
+	
+	<select id="listOnline" parameterType="com.kim.quality.business.vo.TapeVo"
+		resultType="String">
+		select t.agent_id as agentId
+		from icm_qt_tape as t
+		where t.atv_flag = 1 AND t.tenant_id = #{obj.tenantId}
+		<if test="obj.startTime != null and obj.startTime != ''">
+            AND t.start_time <![CDATA[>=]]> #{obj.startTime}
+        </if>
+        <if test="obj.endTime != null and obj.endTime != ''">
+            AND t.start_time <![CDATA[<=]]> #{obj.endTime}
+        </if>
+        <if test="obj.platform != null and obj.platform != ''">
+            AND t.platform = #{obj.platform}
+        </if>
+        <if test="obj.serviceNo != null and obj.serviceNo != ''">
+            AND t.service_no = #{obj.serviceNo}
+        </if>
+        <if test="obj.type != null">
+            AND t.type = #{obj.type}
+        </if>
+        <if test="obj.darkList != null and obj.darkList.size() > 0">
+			and t.agent_id not in 
+			<foreach collection="obj.darkList" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+        </if>
+		group by t.agent_id
+	</select>
+	
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.serialNumber != null and obj.serialNumber != ''">
+            AND t.serial_number = #{obj.serialNumber}
+        </if>
+        <if test="obj.type != null">
+            AND t.type = #{obj.type}
+        </if>
+        <if test="obj.satisfactionType != null">
+            AND t.satisfaction_type = #{obj.satisfactionType}
+        </if>
+        <if test="obj.contractNo != null and obj.contractNo != ''">
+            AND t.contract_no = #{obj.contractNo}
+        </if>
+        <if test="obj.agentId != null and obj.agentId != ''">
+            AND t.agent_id = #{obj.agentId}
+        </if>
+        <if test="obj.custPhone != null and obj.custPhone != ''">
+            AND t.cust_phone = #{obj.custPhone}
+        </if>
+        <if test="obj.agentPhone != null and obj.agentPhone != ''">
+            AND t.agent_phone = #{obj.agentPhone}
+        </if>
+        <if test="obj.agentNo != null and obj.agentNo != ''">
+            AND t.agent_no = #{obj.agentNo}
+        </if>
+        <if test="obj.startTime != null and obj.startTime != ''">
+            AND t.start_time <![CDATA[>=]]> #{obj.startTime}
+        </if>
+        <if test="obj.endTime != null and obj.endTime != ''">
+            AND t.start_time <![CDATA[<=]]> #{obj.endTime}
+        </if>
+        <if test="obj.platform != null and obj.platform != ''">
+            AND t.platform = #{obj.platform}
+        </if>
+        <if test="obj.serviceNo != null and obj.serviceNo != ''">
+            AND t.service_no = #{obj.serviceNo}
+        </if>
+        <if test="obj.recordTimeStart != null">
+            AND t.record_time <![CDATA[>=]]> #{obj.recordTimeStart}
+        </if>
+        <if test="obj.recordTimeEnd != null">
+            AND t.record_time <![CDATA[<]]> #{obj.recordTimeEnd}
+        </if>
+        <if test="obj.darkList != null and obj.darkList.size() > 0">
+			and t.agent_id not in 
+			<foreach collection="obj.darkList" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+        </if>
+        AND t.tenant_id = #{obj.tenantId}
+		AND t.atv_flag = 1
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.quality.business.entity.TapeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_tape as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_qt_tape as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.quality.business.vo.TapeVo"
+		resultType="com.kim.quality.business.entity.TapeEntity">
+		select 
+			t1.cust_id_card as 'ivrInfo.custIdCard',
+			t1.ivr_verify as 'ivrInfo.ivrVerify',
+			t2.type_code as 'summary.typeCode',
+			t2.first_code as 'summary.firstCode',
+			t2.second_code as 'summary.secondCode',
+			t2.third_code as 'summary.thirdCode',
+			t2.forth_code as 'summary.forthCode',
+			t3.name as 'summary.typeName',
+			t4.name as 'summary.firstName',
+			t5.name as 'summary.secondName',
+			t6.name as 'summary.thirdName',
+			t7.name as 'summary.forthName',
+			<include refid="selectColumn"/>
+		from icm_qt_tape as t 
+		left join icm_qt_ivr_info as t1 on t.serial_number = t1.serial_number and t1.tenant_id =#{tenantId} and t1.atv_flag = 1
+		left join icm_qt_tape_summary as t2 on t.serial_number = t2.serial_number and t2.tenant_id =#{tenantId} and t2.atv_flag = 1
+		left join icm_qt_summary as t3 on t3.code = t2.type_code and t3.tenant_id =#{tenantId} and t3.atv_flag = 1
+		left join icm_qt_summary as t4 on t4.code = t2.first_code and t4.tenant_id =#{tenantId} and t4.atv_flag = 1
+		left join icm_qt_summary as t5 on t5.code = t2.second_code and t5.tenant_id =#{tenantId} and t5.atv_flag = 1
+		left join icm_qt_summary as t6 on t6.code = t2.third_code and t6.tenant_id =#{tenantId} and t6.atv_flag = 1
+		left join icm_qt_summary as t7 on t7.code = t2.forth_code and t7.tenant_id =#{tenantId} and t7.atv_flag = 1
+		where t.atv_flag = 1 AND t.tenant_id = #{tenantId}
+			and t.id=#{id}
+		limit 1
+	</select>
+	
+	<select id="findSampleTape" parameterType="com.kim.quality.business.vo.TapeVo"
+		resultType="com.kim.quality.business.entity.TapeEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_qt_sample_tape as t 
+		where t.main_task_id=#{mainTaskId} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+</mapper>

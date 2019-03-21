@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.sp.dao.RecordPlatformDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.record_platform_id as recordPlatformId,
+		t.record_platform_name as recordPlatformName,
+		t.platform_id as platformId,
+		t.record_type as recordType,
+		t.record_format as recordFormat,
+		t.http_address as httpAddress,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName,
+		t.remark as remark
+	</sql>
+	
+	<select id="list" parameterType="com.kim.sp.vo.RecordPlatformVo"
+		resultType="com.kim.sp.entity.RecordPlatformEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_record_platform as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+		
+	<sql id="queryCondition">
+        <if test="obj.id != null">
+            AND t.id = #{obj.id}
+        </if>
+        <if test="obj.recordPlatformId != null and obj.recordPlatformId != ''">
+            AND t.record_platform_id = #{obj.recordPlatformId}
+        </if>
+        <if test="obj.recordPlatformName != null and obj.recordPlatformName != ''">
+            AND t.record_platform_name = #{obj.recordPlatformName}
+        </if>
+        <if test="obj.platformId != null and obj.platformId != ''">
+            AND t.platform_id = #{obj.platformId}
+        </if>
+        <if test="obj.recordType != null and obj.recordType != ''">
+            AND t.record_type = #{obj.recordType}
+        </if>
+        <if test="obj.recordFormat != null and obj.recordFormat != ''">
+            AND t.record_format = #{obj.recordFormat}
+        </if>
+        <if test="obj.httpAddress != null and obj.httpAddress != ''">
+            AND t.http_address = #{obj.httpAddress}
+        </if>
+		AND t.atv_flag = 1
+    	AND t.tenant_id = #{obj.tenantId}
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.sp.entity.RecordPlatformEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_record_platform as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_crm_record_platform as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	
+	<select id="find" parameterType="com.kim.sp.vo.RecordPlatformVo"
+		resultType="com.kim.sp.entity.RecordPlatformEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_crm_record_platform as t 
+		where t.id=#{id} and t.atv_flag = 1
+			AND t.tenant_id = #{tenantId}
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			record_platform_id,
+			record_platform_name,
+			platform_id,
+			record_type,
+			record_format,
+			http_address,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name,
+			remark
+	</sql>
+		
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.kim.sp.entity.RecordPlatformEntity">
+		insert into icm_crm_record_platform(
+			<include refid="insertField"></include>
+		) values (
+            #{recordPlatformId},
+            #{recordPlatformName},
+            #{platformId},
+            #{recordType},
+            #{recordFormat},
+            #{httpAddress},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName},
+            #{remark}
+		)
+	</insert>
+	
+	<!--
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_crm_record_platform(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.recordPlatformId},
+            #{item.recordPlatformName},
+            #{item.platformId},
+            #{item.recordType},
+            #{item.recordFormat},
+            #{item.httpAddress},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName},
+            #{item.remark}
+		)
+		</foreach>
+	</insert>
+	-->
+	
+	<update id="update" parameterType="com.kim.sp.entity.RecordPlatformEntity">
+		update icm_crm_record_platform 
+		<set>
+            <if test="recordPlatformId != null">
+                record_platform_id = #{recordPlatformId},
+            </if>
+            <if test="recordPlatformName != null">
+                record_platform_name = #{recordPlatformName},
+            </if>
+            <if test="platformId != null">
+                platform_id = #{platformId},
+            </if>
+            <if test="recordType != null">
+                record_type = #{recordType},
+            </if>
+            <if test="recordFormat != null">
+                record_format = #{recordFormat},
+            </if>
+            <if test="httpAddress != null">
+                http_address = #{httpAddress},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.sp.vo.RecordPlatformVo">
+		update icm_crm_record_platform set atv_flag=0, oper_time = now()
+		where id=#{id} and atv_flag = 1
+			AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>

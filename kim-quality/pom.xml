@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>com.kim</groupId>
+        <artifactId>kim-parent</artifactId>
+        <version>1.0</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>kim-quality</artifactId>
+    <version>${kim.version}</version>
+    <description>管理后端组件</description>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <!--基础模块-->
+        <dependency>
+            <groupId>com.kim</groupId>
+            <artifactId>kim-quality-model</artifactId>
+            <version>${kim.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kim</groupId>
+            <artifactId>kim-common</artifactId>
+            <version>${kim.common.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kim</groupId>
+            <artifactId>kim-log</artifactId>
+            <version>${kim.log.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kim</groupId>
+            <artifactId>kim-mybatis</artifactId>
+            <version>${kim.mybatis.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kim</groupId>
+            <artifactId>kim-base</artifactId>
+            <version>${kim.base.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kim</groupId>
+            <artifactId>kim-impexp</artifactId>
+            <version>${kim.impexp.version}</version>
+        </dependency>
+
+        <!--测试模块-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+        <!--eureka-->
+        <dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-eureka</artifactId>
+		</dependency>
+
+        <!-- jar运行情况下注释，这里指定打war包的时候不再需要tomcat相关的包 -->
+        <!--<dependency>-->
+        <!--<groupId>org.springframework.boot</groupId>-->
+        <!--<artifactId>spring-boot-starter-tomcat</artifactId>-->
+        <!--<scope>provided</scope>-->
+        <!--</dependency>-->
+    </dependencies>
+    
+    <profiles>
+		<profile>
+			<id>dev</id>
+			<properties><env>dev</env></properties>
+			<activation><activeByDefault>true</activeByDefault></activation>
+		</profile>
+		<profile>
+			<id>sit</id>
+			<properties><env>sit</env></properties>
+		</profile>
+		<profile>
+			<id>uat</id>
+			<properties><env>uat</env></properties>
+		</profile>
+		<profile>
+			<id>prd</id>
+			<properties><env>prd</env></properties>
+		</profile>
+	</profiles>
+	
+    <build>
+        <finalName>quality</finalName>
+        <filters>
+			<filter>${project.basedir}/src/main/resources/filters/${env}.properties</filter>
+		</filters>
+        <resources>
+        	<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>com.kim/**/mapper/*.xml</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>${project.basedir}/src/main/resources</directory>
+				<includes>
+	            	<include>application.yml</include>
+	            	<include>logback-spring.xml</include>
+	            	<include>banner.txt</include>
+				</includes>
+				<filtering>true</filtering>
+			</resource>
+			<resource>
+				<directory>${project.basedir}/src/main/resources</directory>
+				<includes>
+	            	<include>assembly/**</include>
+				</includes>
+				<filtering>true</filtering>
+				<targetPath>${project.basedir}/target/</targetPath>
+			</resource>
+		</resources>
+        <plugins>
+        	<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.compile.version}</source>
+                    <target>${java.compile.version}</target>
+                </configuration>
+            </plugin>
+            <!--打包即生成jar-->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+            </plugin>
+            <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>${maven-assembly-plugin.version}</version>
+				<configuration>
+					<finalName>${project.artifactId}</finalName>
+					<descriptors>
+						<descriptor>target/assembly/assembly.xml</descriptor>
+					</descriptors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+        </plugins>
+    </build>
+
+
+</project>
+

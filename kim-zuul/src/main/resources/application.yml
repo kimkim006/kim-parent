@@ -1,0 +1,97 @@
+server:
+  port: @server.port@
+  context-path: /icm-api
+  tomcat: 
+      basedir: @server.tomcat.basedir@
+
+spring:
+  evn: @env@
+  application:
+    name: icm-zuul
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+  redis:
+    host: @spring.redis.host@
+    port: @spring.redis.port@
+    password: @spring.redis.password@
+    
+#未登录前白名单url和登录后的白名单url, 用户登录token保持时长（秒）
+access: 
+  token:
+    keep-time: 7200
+  filter: 
+    ignoreAuthUrl: /health;/info;
+    ignoreAuthResUrl:
+
+eureka:
+  instance:
+    hostname: ${spring.cloud.client.ipAddress}:${server.port}
+    statusPageUrlPath: ${server.context-path}/health
+    healthCheckUrlPath: ${server.context-path}/health
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+    lease-renewal-interval-in-seconds: 10 #续约更新频率，默认是30s
+    lease-expiration-duration-in-seconds: 15 
+  client:
+    serviceUrl:
+      defaultZone: ${eureka.instance.server}
+    registry-fetch-interval-seconds: 15 #拉取服务注册时间，默认60，改小实现发布后尽快访问
+#ribbon:
+#    ServerListRefreshInterval: 5000
+
+logging:
+  config: classpath:logback-spring.xml
+  
+zuul:
+  max:
+    host:
+      connections: 500
+  host:
+    socket-timeout-millis: 120000
+    connect-timeout-millis: 120000
+  sensitiveHeaders:
+  ignore:
+    url: /admin/login/loginIn
+  routes:
+    admin:
+      path: /admin/**
+      service-id: icm-admin
+      stripPrefix: false
+    quality:
+      path: /quality/**
+      service-id: icm-quality
+      stripPrefix: false
+    schedule:
+      path: /schedule/**
+      service-id: icm-schedule
+      stripPrefix: false
+    softPhone:
+      path: /softPhone/**
+      service-id: icm-softPhone
+      stripPrefix: false
+
+management: 
+  security: 
+    enabled: false
+
+#单个请求时长，默认是1000ms，太短      
+##timeout config
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          thread:
+            timeoutInMilliseconds: 120000
+ribbon:
+  ReadTimeout: 120000
+  ConnectTimeout: 120000
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 1
+  ServerListRefreshInterval: 5000

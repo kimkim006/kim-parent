@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kim.admin.dao.AuthorityDao">
+
+	<sql id="selectColumn">
+		t.id as id,
+		t.owner_code as ownerCode,
+		t.menu_code as menuCode,
+		t.owner_type as ownerType,
+		t.tenant_id as tenantId,
+		t.atv_flag as atvFlag,
+		DATE_FORMAT(t.oper_time,'%Y-%m-%d %H:%i:%s') as operTime,
+		t.oper_user as operUser,
+		t.oper_name as operName
+	</sql>
+	
+	<select id="list" parameterType="com.kim.admin.vo.AuthorityVo"
+		resultType="com.kim.admin.entity.AuthorityEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_authority_rl as t
+		left join icm_admin_menu as t1 on t.menu_code = t1.code
+		<where>
+			 <if test="obj.ownerCode != null and obj.ownerCode != ''">
+	            and t1.type = #{obj.menuType} 
+	        </if>
+			AND t1.atv_flag = 1
+			<include refid="queryCondition"/>
+		</where>
+	</select>
+
+	<select id="listUserRoleAuth" parameterType="com.kim.admin.vo.AuthorityVo"
+		resultType="com.kim.admin.entity.AuthorityEntity">
+		select
+			<include refid="selectColumn"/>
+		from icm_admin_authority_rl as t 
+		left join icm_admin_user_role_rl as t1 on t.owner_code = t1.role_code
+		left join icm_admin_menu as t2 on t.menu_code = t2.code
+		where
+			t.owner_type = 2
+			and t2.type = #{menuType} 
+			and t1.username=#{username}
+			AND t.atv_flag = 1
+			AND t1.atv_flag = 1
+			AND t2.atv_flag = 1
+			<if test="tenantId != 'DEFAULT'">
+				AND t.tenant_id = #{tenantId}
+				AND t1.tenant_id = #{tenantId}
+			</if>
+	</select>
+
+	<sql id="queryCondition">
+        <if test="obj.ownerCode != null and obj.ownerCode != ''">
+            AND t.owner_code = #{obj.ownerCode}
+        </if>
+        <if test="obj.menuCode != null and obj.menuCode != ''">
+            AND t.menu_code = #{obj.menuCode}
+        </if>
+        <if test="obj.ownerType != null">
+            AND t.owner_type = #{obj.ownerType}
+        </if>
+		AND tenant_id = #{obj.tenantId}
+        AND t.atv_flag = 1
+	</sql>
+	
+	<select id="listByPage" parameterType="java.util.HashMap"
+		resultType="com.kim.admin.entity.AuthorityEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_authority_rl as t
+		<where>
+			<include refid="queryCondition"/>
+		</where>
+		<if test="page.orderBy != null and page.orderBy != ''">
+			order by ${page.orderBy} ${page.orderType} 
+		</if>
+		limit #{page.offset},#{page.rows}
+	</select>
+	
+	<!-- <select id="listByPageCount" parameterType="java.util.HashMap" resultType="int">
+		select 
+			count(1) as count
+		from icm_admin_authority_rl as t
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<include refid="queryCondition"/>
+		</trim>
+	</select> -->
+	 
+	<select id="find" parameterType="com.kim.admin.vo.AuthorityVo"
+		resultType="com.kim.admin.entity.AuthorityEntity">
+		select 
+			<include refid="selectColumn"/>
+		from icm_admin_authority_rl as t 
+		where t.id=#{id} 
+		and t.atv_flag = 1
+		<if test="tenantId != 'DEFAULT'">
+			AND t.tenant_id = #{tenantId}
+		</if>
+		limit 1
+	</select>
+	
+	<sql id="insertField">
+			owner_code,
+			menu_code,
+			owner_type,
+			tenant_id,
+			atv_flag,
+			oper_time,
+			oper_user,
+			oper_name
+	</sql>
+		
+	<insert id="insert" parameterType="com.kim.admin.entity.AuthorityEntity">
+		insert into icm_admin_authority_rl(
+			<include refid="insertField"></include>
+		) values (
+            #{ownerCode},
+            #{menuCode},
+            #{ownerType},
+            #{tenantId},
+            #{atvFlag},
+            now(),
+            #{operUser},
+            #{operName}
+		)
+	</insert>
+	
+	<insert id="insertBatch" parameterType="java.util.List">
+		insert into icm_admin_authority_rl(
+			<include refid="insertField"></include>
+		) values 
+		<foreach collection="list" item="item" separator=",">
+		(
+            #{item.ownerCode},
+            #{item.menuCode},
+            #{item.ownerType},
+            #{item.tenantId},
+            #{item.atvFlag},
+            now(),
+            #{item.operUser},
+            #{item.operName}
+		)
+		</foreach>
+	</insert>
+
+	<update id="update" parameterType="com.kim.admin.entity.AuthorityEntity">
+		update icm_admin_authority_rl 
+		<set>
+            <if test="ownerCode != null">
+                owner_code = #{ownerCode},
+            </if>
+            <if test="menuCode != null">
+                menu_code = #{menuCode},
+            </if>
+            <if test="ownerType != null">
+                owner_type = #{ownerType},
+            </if>
+            oper_time = now(),
+            <if test="operUser != null">
+                oper_user = #{operUser},
+            </if>
+            <if test="operName != null">
+                oper_name = #{operName},
+            </if>
+		</set>
+		where id=#{id} and atv_flag = 1
+		<if test="tenantId != 'DEFAULT'">
+			AND t.tenant_id = #{tenantId}
+		</if>
+	</update>
+	
+	<update id="active" parameterType="com.kim.admin.vo.AuthorityVo">
+		update icm_admin_authority_rl set atv_flag=1, oper_time = now()
+		where atv_flag = 0
+		<choose>
+			<when test="roleCode != null">
+				and owner_code = #{roleCode}
+			</when>
+			<otherwise>
+				and owner_code = #{username}
+			</otherwise>
+		</choose>
+		AND tenant_id = #{tenantId}
+	</update>
+	
+	<update id="deleteLogic" parameterType="com.kim.admin.vo.AuthorityVo">
+	
+		update icm_admin_authority_rl set atv_flag=0, oper_time = now()
+		where atv_flag = 1
+		<choose>
+			<when test="roleCode != null">
+				and owner_code = #{roleCode}
+			</when>
+			<otherwise>
+				and owner_code = #{username}
+			</otherwise>
+		</choose>
+		<if test="delAuthList != null and delAuthList.size()> 0">
+			and menu_code in
+			<foreach collection="delAuthList" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		AND tenant_id = #{tenantId}
+	</update>
+	
+</mapper>
